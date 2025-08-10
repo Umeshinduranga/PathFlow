@@ -2,13 +2,14 @@
   "name": "server",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^3.0.2",
@@ -18,5 +19,6 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.16.5",
     "openai": "^5.10.2"
-  }
+  },
+  "description": ""
 }
