@@ -1,34 +1,56 @@
 import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
+import OpenAI from "openai";
 
+// Load environment variables
+dotenv.config();
+
+// ✅ Create app FIRST
 const app = express();
 
-// Allow frontend to talk to backend
+// Middleware
 app.use(cors());
-
-// Allow backend to read JSON in request body
 app.use(express.json());
 
-// Test route for browser
+// Create OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+// Test route
 app.get("/", (req, res) => {
   res.send("Server is working!");
 });
 
-// ✅ Our POST route for learning path
-app.post("/generate-path", (req, res) => {
+// ✅ AI-powered route
+app.post("/generate-path", async (req, res) => {
   const { skills, goal } = req.body;
 
-  res.json({
-    steps: [
-      `Learn the basics of ${skills}`,
-      `Do beginner projects related to ${goal}`,
-      "Study advanced concepts",
-      "Build a portfolio project",
-      "Practice interview questions",
-      "Apply for jobs/internships"
-    ]
-  });
+  if (!skills || !goal) {
+    return res.status(400).json({ error: "Please provide skills and goal" });
+  }
+
+  try {
+    const prompt = `Create a beginner-friendly, step-by-step learning path for someone who knows ${skills} and wants to become a ${goal}. Include 6 clear steps.`;
+
+    const response = await openai.responses.create({
+      model: "gpt-4o-mini",
+      input: prompt
+    });
+
+    const text = response.output_text || "No steps generated.";
+    const steps = text.split("\n").filter(line => line.trim() !== "");
+
+    res.json({ steps });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "AI generation failed" });
+  }
 });
 
 // Start server
-app.listen(5000, () => console.log("Server running on port 5000"));
+const PORT = 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
