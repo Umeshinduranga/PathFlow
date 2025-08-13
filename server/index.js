@@ -6,7 +6,7 @@ import OpenAI from "openai";
 // Load environment variables
 dotenv.config();
 
-// ✅ Create app FIRST
+//  Create app FIRST
 const app = express();
 
 // Middleware
@@ -23,7 +23,7 @@ app.get("/", (req, res) => {
   res.send("Server is working!");
 });
 
-// ✅ AI-powered route
+//  AI-powered route
 app.post("/generate-path", async (req, res) => {
   const { skills, goal } = req.body;
 
