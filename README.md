@@ -22,7 +22,7 @@ Personal Learning Path Generator
  - **Frontend**: React, Tailwind CSS, Chart.js (planned)
  - **Backend**: Node.js, Express
  - **Database**: MongoDB (MongoDB Atlas)
- - **AI**: Google Gemini API
+ - **AI**: Open AI API
  - **Authentication**: JSON Web Tokens (JWT)
  - **Tools**: Postman (for testing), Git, GitHub
 
@@ -30,7 +30,7 @@ Personal Learning Path Generator
  ### Prerequisites
  - Node.js (v16 or higher)
  - MongoDB Atlas account
- - Google Gemini API key
+ - Open AI API key
  - Git
  - Postman (for testing)
 
@@ -49,11 +49,11 @@ Personal Learning Path Generator
     ```env
     MONGODB_URI=mongodb+srv://<user>:<pass>@cluster0.mongodb.net/learning_path
     JWT_SECRET=your_jwt_secret
-    GEMINI_API_KEY=your_gemini_api_key
+    OPENAI_API_KEY=your_api_key_here
     ```
  4. Start the server:
     ```bash
-    node server.js
+    npm start
     ```
     You should see:
     ```
