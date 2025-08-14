@@ -40,29 +40,35 @@ Create a clear, beginner-friendly, step-by-step learning path for someone who al
 - Number each step.
 - Use short, clear sentences.
 - Avoid unnecessary text before or after the steps.
-- Each step should start with a verb (e.g., "Learn", "Practice", "Build", "Explore").
+- Each step should start with a verb.
 `;
 
-    const response = await openai.responses.create({
+    //  Correct OpenAI call for modern SDK
+    const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      input: prompt
+      messages: [
+        { role: "system", content: "You are a helpful assistant." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.7
     });
 
-    // Extract text output
-    const text = response.output_text || "";
-    
-    // Split into steps based on line breaks and numbers
+    // Extract text safely
+    const text = response.choices?.[0]?.message?.content || "";
+
+    //  Turn into array of steps
     const steps = text
       .split("\n")
       .map(line => line.trim())
-      .filter(line => line && /^\d+\./.test(line)) // keep only numbered lines
+      .filter(line => line && /^\d+\./.test(line));
 
     res.json({ steps });
   } catch (error) {
-    console.error(error);
+    console.error("Error in /generate-path:", error);
     res.status(500).json({ error: "AI generation failed" });
   }
 });
+
 
 
 // Start server
