@@ -32,15 +32,30 @@ app.post("/generate-path", async (req, res) => {
   }
 
   try {
-    const prompt = `Create a beginner-friendly, step-by-step learning path for someone who knows ${skills} and wants to become a ${goal}. Include 6 clear steps.`;
+    const prompt = `
+You are a professional career coach and teacher.
+
+Create a clear, beginner-friendly, step-by-step learning path for someone who already knows ${skills} and wants to become a ${goal}.
+- Provide exactly 6 steps.
+- Number each step.
+- Use short, clear sentences.
+- Avoid unnecessary text before or after the steps.
+- Each step should start with a verb (e.g., "Learn", "Practice", "Build", "Explore").
+`;
 
     const response = await openai.responses.create({
       model: "gpt-4o-mini",
       input: prompt
     });
 
-    const text = response.output_text || "No steps generated.";
-    const steps = text.split("\n").filter(line => line.trim() !== "");
+    // Extract text output
+    const text = response.output_text || "";
+    
+    // Split into steps based on line breaks and numbers
+    const steps = text
+      .split("\n")
+      .map(line => line.trim())
+      .filter(line => line && /^\d+\./.test(line)) // keep only numbered lines
 
     res.json({ steps });
   } catch (error) {
@@ -48,6 +63,7 @@ app.post("/generate-path", async (req, res) => {
     res.status(500).json({ error: "AI generation failed" });
   }
 });
+
 
 // Start server
 const PORT = 5000;
