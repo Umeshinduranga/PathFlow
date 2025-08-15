@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
 import mongoose from "mongoose";
+import LearningPath from "./models/LearningPath.js";
+
 
 
 mongoose.connect(process.env.MONGO_URI, {
