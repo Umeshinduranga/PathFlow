@@ -29,41 +29,40 @@ function App() {
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "500px", margin: "auto" }}>
-      <h1>Learning Path Generator</h1>
-
-      {/* Form to collect user input */}
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Your skills (e.g., Python)"
-          value={skills}
-          onChange={(e) => setSkills(e.target.value)}
-          style={{ display: "block", width: "100%", marginBottom: "10px" }}
-        />
-        <input
-          type="text"
-          placeholder="Your goal (e.g., Data Scientist)"
-          value={goal}
-          onChange={(e) => setGoal(e.target.value)}
-          style={{ display: "block", width: "100%", marginBottom: "10px" }}
-        />
-        <button type="submit">Generate Path</button>
-      </form>
-
-      {/* Show the results */}
+    <div className="app-container">
+      <h1>📚 Personal Learning Path Generator</h1>
+  
+      <div className="card">
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            placeholder="Enter your current skills (e.g., Python, HTML)"
+            value={skills}
+            onChange={(e) => setSkills(e.target.value)}
+          />
+          <input
+            type="text"
+            placeholder="Enter your career goal (e.g., Data Scientist)"
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+          />
+          <button type="submit">Generate Path</button>
+        </form>
+      </div>
+  
       {steps.length > 0 && (
-        <div style={{ marginTop: "20px" }}>
-          <h2>Your Learning Path:</h2>
-          <ul>
+        <div className="results-card">
+          <h2>🚀 Your Learning Path</h2>
+          <ol>
             {steps.map((step, index) => (
               <li key={index}>{step}</li>
             ))}
-          </ul>
+          </ol>
         </div>
       )}
     </div>
   );
+
 }
 
 export default App;
