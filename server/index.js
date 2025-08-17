@@ -5,7 +5,8 @@ import OpenAI from "openai";
 import mongoose from "mongoose";
 import LearningPath from "./models/LearningPath.js";
 
-
+// Load environment variables
+dotenv.config();
 
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
@@ -15,8 +16,7 @@ mongoose.connect(process.env.MONGO_URI, {
 .catch(err => console.error("❌ MongoDB connection error:", err));
 
 
-// Load environment variables
-dotenv.config();
+
 
 //  Create app FIRST
 const app = express();
