@@ -30,7 +30,7 @@ Personal Learning Path Generator
  ### Prerequisites
  - Node.js (v16 or higher)
  - MongoDB Atlas account
- - Open AI API key
+ - Gemini API
  - Git
  - Postman (for testing)
 
@@ -49,7 +49,7 @@ Personal Learning Path Generator
     ```env
     MONGODB_URI=mongodb+srv://<user>:<pass>@cluster0.mongodb.net/learning_path
     JWT_SECRET=your_jwt_secret
-    OPENAI_API_KEY=your_api_key_here
+    GEMINI_API_KEY=your_api_key_here
     ```
  4. Start the server:
     ```bash
