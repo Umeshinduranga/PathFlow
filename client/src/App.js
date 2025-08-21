@@ -1,7 +1,43 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 
-function App() {
-  // State variables
+// Landing Page
+function Home() {
+  return (
+    <div
+      style={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      <h1 style={{ marginBottom: "30px", color: "#007bff" }}>
+        🎯 Welcome to Learning Path Generator
+      </h1>
+      <Link to="/generate">
+        <button
+          style={{
+            padding: "14px 28px",
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            fontSize: "18px",
+            cursor: "pointer",
+          }}
+        >
+          🚀 Generate Path
+        </button>
+      </Link>
+    </div>
+  );
+}
+
+// Generate Path Form Page
+function GeneratePathForm() {
   const [skills, setSkills] = useState("");
   const [goal, setGoal] = useState("");
   const [steps, setSteps] = useState([]);
@@ -9,7 +45,6 @@ function App() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -57,7 +92,6 @@ function App() {
         🎯 Learning Path Generator
       </h1>
 
-      {/* Form */}
       <form onSubmit={handleSubmit} style={{ marginBottom: "20px" }}>
         <input
           type="text"
@@ -108,7 +142,6 @@ function App() {
         </button>
       </form>
 
-      {/* Messages */}
       {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
       {success && (
         <p style={{ color: "green", textAlign: "center" }}>
@@ -116,7 +149,6 @@ function App() {
         </p>
       )}
 
-      {/* Results */}
       {!loading && steps.length > 0 && (
         <div
           style={{
@@ -136,13 +168,24 @@ function App() {
         </div>
       )}
 
-      {/* Default empty state */}
       {!loading && steps.length === 0 && !error && !success && (
         <p style={{ textAlign: "center", color: "#777" }}>
           Start by entering your skills & goal above 👆
         </p>
       )}
     </div>
+  );
+}
+
+// Main App
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/generate" element={<GeneratePathForm />} />
+      </Routes>
+    </Router>
   );
 }
 
