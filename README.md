@@ -276,7 +276,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Links
 
-- [Live Demo](https://livedemo.com) (coming soon)
+- Live Demo(coming soon)
 - [Documentation](https://github.com/Umeshinduranga/personal-learning-path/wiki)
 - [Report Bug](https://github.com/Umeshinduranga/personal-learning-path/issues)
 - [Request Feature](https://github.com/Umeshinduranga/personal-learning-path/issues)
