@@ -73,6 +73,25 @@ Create a clear, beginner-friendly, step-by-step learning path for someone who al
       });
     }
 
+    // ===== STEP 2: Save generated path to MongoDB (minimal change) =====
+    try {
+      const skillsArr = skills
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean);
+      const cleanedSteps = steps.map(s => s.replace(/^\d+\.\s*/, "")); // store without "1. "
+
+      await LearningPath.create({
+        skills: skillsArr.length ? skillsArr : [skills],
+        goal,
+        path: cleanedSteps
+      });
+    } catch (dbErr) {
+      console.error("⚠️ Failed to save learning path:", dbErr);
+      // do not block the response to the client
+    }
+    // ================================================================
+
     res.json({ steps });
   } catch (error) {
     console.error("❌ Error in /generate-path:", error);
