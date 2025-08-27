@@ -135,7 +135,7 @@ const Navigation = () => (
         fontFamily: 'Poppins',
         textShadow: "0 0 10px rgba(60,26,107, 0.5)"
       }}>
-        🎯 Learning Path Generator
+        🎯 PathFlow
       </Link>
       <div>
         <Link to="/" style={{
