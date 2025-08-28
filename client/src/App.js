@@ -18,7 +18,7 @@ const AppContextProvider = ({ children }) => {
   const [learningPaths, setLearningPaths] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [apiUrl] = useState(process.env.REACT_APP_API_URL || "http://localhost:5000");
+  const [apiUrl] = useState(process.env.REACT_APP_API_URL || "");
 
   const value = {
     learningPaths,
