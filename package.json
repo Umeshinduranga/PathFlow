@@ -1,0 +1,11 @@
+{
+  "name": "learnpathgen",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm start --prefix server\" \"npm start --prefix client\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
