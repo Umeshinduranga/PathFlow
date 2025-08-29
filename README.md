@@ -4,14 +4,14 @@ A full-stack web application that generates personalized learning paths using AI
 
 ## 🌟 Features
 
-- ** User Authentication**: Secure registration and login system using JWT tokens
-- ** Skill Assessment**: Interactive form to input skills, career goals, and learning preferences
-- ** AI-Powered Learning Paths**: Leverages Google Gemini API to create personalized learning roadmaps
-- ** Curated Resources**: Integration with free learning platforms (freeCodeCamp, Coursera, Khan Academy)
-- ** Progress Tracking**: Mark milestones as complete and visualize your learning journey
-- ** Study Groups**: Join or create community study groups for collaborative learning (coming soon)
-- ** Responsive Design**: Modern, mobile-friendly interface built with React and Tailwind CSS
-- ** Visual Analytics**: Progress visualization with Chart.js (planned feature)
+- **User Authentication**: Secure registration and login system using JWT tokens
+- **Skill Assessment**: Interactive form to input skills, career goals, and learning preferences
+- **AI-Powered Learning Paths**: Leverages Google Gemini API to create personalized learning roadmaps
+- **Curated Resources**: Integration with free learning platforms (freeCodeCamp, Coursera, Khan Academy)
+- **Progress Tracking**: Mark milestones as complete and visualize your learning journey
+- **Study Groups**: Join or create community study groups for collaborative learning (coming soon)
+- **Responsive Design**: Modern, mobile-friendly interface built with React and Tailwind CSS
+- **Visual Analytics**: Progress visualization with Chart.js (planned feature)
 
 ## 🛠️ Tech Stack
 
