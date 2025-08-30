@@ -4,14 +4,14 @@ A full-stack web application that generates personalized learning paths using AI
 
 ## 🌟 Features
 
-- **🔐 User Authentication**: Secure registration and login system using JWT tokens
-- **📊 Skill Assessment**: Interactive form to input skills, career goals, and learning preferences
-- **🤖 AI-Powered Learning Paths**: Leverages Google Gemini API to create personalized learning roadmaps
-- **📚 Curated Resources**: Integration with free learning platforms (freeCodeCamp, Coursera, Khan Academy)
-- **📈 Progress Tracking**: Mark milestones as complete and visualize your learning journey
-- **👥 Study Groups**: Join or create community study groups for collaborative learning (coming soon)
-- **📱 Responsive Design**: Modern, mobile-friendly interface built with React and Tailwind CSS
-- **📊 Visual Analytics**: Progress visualization with Chart.js (planned feature)
+- **User Authentication**: Secure registration and login system using JWT tokens
+- **Skill Assessment**: Interactive form to input skills, career goals, and learning preferences
+- **AI-Powered Learning Paths**: Leverages Google Gemini API to create personalized learning roadmaps
+- **Curated Resources**: Integration with free learning platforms (freeCodeCamp, Coursera, Khan Academy)
+- **Progress Tracking**: Mark milestones as complete and visualize your learning journey
+- **Study Groups**: Join or create community study groups for collaborative learning (coming soon)
+- **Responsive Design**: Modern, mobile-friendly interface built with React and Tailwind CSS
+- **Visual Analytics**: Progress visualization with Chart.js (planned feature)
 
 ## 🛠️ Tech Stack
 
@@ -53,20 +53,19 @@ git clone https://github.com/Umeshinduranga/personal-learning-path.git
 cd personal-learning-path
 ```
 
-#### 2. Server Setup
+#### 2. Install Dependencies
 ```bash
-# Navigate to server directory
-cd server
-
-# Install dependencies
+# Install both client and server dependencies
 npm install
 
-# Create environment variables file
-cp .env.example .env
+# Install client dependencies
+cd client
+npm install
+cd ..
 ```
 
 #### 3. Configure Environment Variables
-Create a `.env` file in the `server` directory with the following variables:
+Create a `.env` file in the root directory with the following variables:
 
 ```env
 # Database Configuration
@@ -83,36 +82,46 @@ PORT=5000
 NODE_ENV=development
 ```
 
-#### 4. Start the Backend Server
+#### 4. Start the Application
 ```bash
-npm start
+# Start both frontend and backend with a single command
+npm run dev
 ```
 
-You should see:
+The application will automatically:
+- Start the backend server on `http://localhost:5000`
+- Launch the React frontend on `http://localhost:3000`
+- Open your default browser to the application
+
+You should see output similar to:
 ```
-Server running on port 5000
-Connected to MongoDB
+[server] Server running on port 5000
+[server] Connected to MongoDB
+[client] Compiled successfully!
+[client] Local: http://localhost:3000
 ```
-
-#### 5. Client Setup
-Open a new terminal and navigate to the client directory:
-
-```bash
-# Navigate to client directory
-cd client
-
-# Install dependencies
-npm install
-
-# Start the development server
-npm start
-```
-
-The React application will be available at `http://localhost:3000`.
 
 ## 📖 Usage
 
+### Getting Started with the Application
+
+1. **Access the App**: Navigate to `http://localhost:3000` (opens automatically)
+2. **Register/Login**: Create an account or sign in to access personalized features
+3. **Complete Assessment**: Fill out the comprehensive assessment form including:
+   - Current technical skills
+   - Career aspirations
+   - Preferred learning style
+   - Available time commitment
+4. **Generate Learning Path**: Receive a customized learning roadmap with:
+   - Step-by-step milestones
+   - Curated free resources
+   - Estimated completion times
+5. **Track Progress**: Mark completed milestones and monitor your learning journey
+6. **Join Community**: Connect with study groups and fellow learners (coming soon)
+
 ### API Testing with Postman
+
+If you want to test the API endpoints directly:
 
 #### User Registration
 - **Method**: `POST`
@@ -156,21 +165,6 @@ The React application will be available at `http://localhost:3000`.
 }
 ```
 
-### Web Application Workflow
-
-1. **Registration/Login**: Create an account or sign in to access personalized features
-2. **Skill Assessment**: Complete the comprehensive assessment form including:
-   - Current technical skills
-   - Career aspirations
-   - Preferred learning style
-   - Available time commitment
-3. **AI Path Generation**: Receive a customized learning roadmap with:
-   - Step-by-step milestones
-   - Curated free resources
-   - Estimated completion times
-4. **Progress Tracking**: Mark completed milestones and track your learning journey
-5. **Community Features**: Join study groups and connect with fellow learners (coming soon)
-
 ## 📁 Project Structure
 
 ```
@@ -179,7 +173,6 @@ personal-learning-path/
 │   ├── 📁 models/             # MongoDB schemas (User, Group)
 │   ├── 📁 routes/             # API routes (auth, assessment, community)
 │   ├── 📁 services/           # Resource fetching logic
-│   ├── 📄 .env                # Environment variables
 │   └── 📄 server.js           # Main server file
 ├── 📁 client/                 # Frontend code
 │   ├── 📁 src/                # React components and pages
@@ -188,8 +181,9 @@ personal-learning-path/
 │   │   └── 📄 index.js        # React entry point
 │   ├── 📁 public/             # Static assets
 │   └── 📄 package.json        # Client dependencies
-├── 📄 README.md               # Project documentation
-└── 📄 package.json            # Project metadata
+├── 📄 .env                    # Environment variables (root level)
+├── 📄 package.json            # Main package.json with start scripts
+└── 📄 README.md               # Project documentation
 ```
 
 ## 🔌 API Endpoints
@@ -200,6 +194,25 @@ personal-learning-path/
 
 ### Assessment Routes (`/api/assessment`)
 - `POST /submit` - Submit skill assessment and generate learning path
+
+## 🔧 Development Scripts
+
+```bash
+# Start both client and server in development mode
+npm start
+
+# Start only the server
+npm run server
+
+# Start only the client
+npm run client
+
+# Install dependencies for both client and server
+npm run install-all
+
+# Build client for production
+npm run build
+```
 
 ## 🤝 Contributing
 
@@ -217,9 +230,9 @@ We welcome contributions from the community! Here's how you can help:
    ```
 
 ### Making Changes
-1. **Install** dependencies for both client and server
+1. **Install** dependencies: `npm install`
 2. **Make** your changes following our coding standards
-3. **Test** your changes thoroughly
+3. **Test** your changes by running `npm start`
 4. **Commit** your changes with descriptive messages:
    ```bash
    git commit -m "Add: Implement user progress visualization"
@@ -243,17 +256,18 @@ We welcome contributions from the community! Here's how you can help:
 ## 🛣️ Roadmap
 
 ### Current Implementation
-- ✅ User authentication (ongoing)
+- ✅ User authentication system
 - ✅ Skill assessment form with personalized input fields
 - ✅ AI-powered learning path generation using Google Gemini API
 - ✅ Responsive React frontend with Tailwind CSS
+- ✅ Integrated frontend/backend deployment
 
 ### Planned Features
 - 📋 Progress tracking with milestone completion
 - 📋 Visual progress charts using Chart.js
 - 📋 Community study groups functionality
 - 📋 Enhanced resource recommendations and filtering
-
+- 📋 Mobile app development
 
 ## 📞 Support
 
@@ -276,7 +290,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Links
 
-- Live Demo(coming soon)
+- Live Demo (coming soon)
 - [Documentation](https://github.com/Umeshinduranga/personal-learning-path/wiki)
 - [Report Bug](https://github.com/Umeshinduranga/personal-learning-path/issues)
 - [Request Feature](https://github.com/Umeshinduranga/personal-learning-path/issues)
