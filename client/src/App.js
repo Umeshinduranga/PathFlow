@@ -1,4 +1,4 @@
-import React, { useState, createContext, useContext, useEffect } from "react";
+import React, { useState, createContext, useContext, useEffect, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from "react-router-dom";
 
 // Global Context for state management
@@ -360,13 +360,383 @@ const LearningPathDisplay = ({ steps, skills, goal, metadata }) => (
   </div>
 );
 
-// Enhanced Generate Path Form Page
+// Roadmap Generator Component (inline)
+const RoadmapGenerator = ({ steps, skills, goal, onDownload }) => {
+  const canvasRef = useRef(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [roadmapGenerated, setRoadmapGenerated] = useState(false);
+
+  // Canvas dimensions
+  const CANVAS_WIDTH = 1200;
+  const CANVAS_HEIGHT = 800;
+  const NODE_RADIUS = 40;
+  const SPACING_X = 180;
+  const SPACING_Y = 120;
+
+  // Colors
+  const COLORS = {
+    background: '#0a0a1a',
+    accent: '#3c1a6b',
+    accentLight: '#6b4ba1',
+    white: '#ffffff',
+    gray: '#a0a0a0',
+    success: '#28a745',
+    connection: '#4a2c7a'
+  };
+
+  // Generate roadmap on canvas
+  const generateRoadmap = async () => {
+    setIsGenerating(true);
+    
+    // Small delay to show loading state
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+    
+    // Clear and set background
+    ctx.fillStyle = COLORS.background;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    
+    // Add subtle grid pattern
+    ctx.strokeStyle = 'rgba(60, 26, 107, 0.1)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < CANVAS_WIDTH; x += 50) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, CANVAS_HEIGHT);
+      ctx.stroke();
+    }
+    for (let y = 0; y < CANVAS_HEIGHT; y += 50) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(CANVAS_WIDTH, y);
+      ctx.stroke();
+    }
+    
+    // Title section
+    ctx.fillStyle = COLORS.white;
+    ctx.font = 'bold 32px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🎯 Learning Roadmap', CANVAS_WIDTH / 2, 60);
+    
+    // Subtitle with skills and goal
+    ctx.font = '18px Arial, sans-serif';
+    ctx.fillStyle = COLORS.gray;
+    const subtitle = `From: ${skills} → To: ${goal}`;
+    ctx.fillText(subtitle, CANVAS_WIDTH / 2, 90);
+    
+    // Calculate positions for steps in a zigzag pattern
+    const positions = [];
+    const startY = 200;
+    const centerX = CANVAS_WIDTH / 2;
+    
+    steps.forEach((step, index) => {
+      const isEven = index % 2 === 0;
+      const offsetX = isEven ? -SPACING_X : SPACING_X;
+      const x = centerX + offsetX;
+      const y = startY + (index * SPACING_Y);
+      positions.push({ x, y, isEven });
+    });
+    
+    // Draw connections between steps
+    ctx.strokeStyle = COLORS.connection;
+    ctx.lineWidth = 3;
+    ctx.setLineDash([5, 5]);
+    
+    for (let i = 0; i < positions.length - 1; i++) {
+      const current = positions[i];
+      const next = positions[i + 1];
+      
+      // Add glow effect to connections
+      ctx.shadowColor = COLORS.accent;
+      ctx.shadowBlur = 10;
+      
+      ctx.beginPath();
+      ctx.moveTo(current.x, current.y + NODE_RADIUS);
+      
+      // Create curved connection
+      const midY = (current.y + next.y) / 2;
+      ctx.quadraticCurveTo(current.x, midY, next.x, next.y - NODE_RADIUS);
+      ctx.stroke();
+      
+      // Reset shadow
+      ctx.shadowBlur = 0;
+    }
+    
+    ctx.setLineDash([]); // Reset dash pattern
+    
+    // Draw step nodes and text
+    steps.forEach((step, index) => {
+      const pos = positions[index];
+      const stepText = step.replace(/^\d+\.\s*/, '');
+      
+      // Draw node circle with gradient effect
+      const gradient = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, NODE_RADIUS);
+      gradient.addColorStop(0, COLORS.accentLight);
+      gradient.addColorStop(1, COLORS.accent);
+      
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = COLORS.accent;
+      ctx.shadowBlur = 15;
+      
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, NODE_RADIUS, 0, 2 * Math.PI);
+      ctx.fill();
+      
+      // Reset shadow
+      ctx.shadowBlur = 0;
+      
+      // Draw step number
+      ctx.fillStyle = COLORS.white;
+      ctx.font = 'bold 24px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText((index + 1).toString(), pos.x, pos.y + 8);
+      
+      // Draw step text
+      ctx.fillStyle = COLORS.white;
+      ctx.font = 'bold 16px Arial, sans-serif';
+      
+      // Word wrap for long text
+      const words = stepText.split(' ');
+      const maxWidth = 200;
+      let lines = [];
+      let currentLine = words[0];
+      
+      for (let i = 1; i < words.length; i++) {
+        const testLine = currentLine + ' ' + words[i];
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth) {
+          lines.push(currentLine);
+          currentLine = words[i];
+        } else {
+          currentLine = testLine;
+        }
+      }
+      lines.push(currentLine);
+      
+      // Position text based on node position
+      const textX = pos.isEven ? pos.x - NODE_RADIUS - 20 : pos.x + NODE_RADIUS + 20;
+      ctx.textAlign = pos.isEven ? 'right' : 'left';
+      
+      lines.forEach((line, lineIndex) => {
+        const textY = pos.y + (lineIndex - lines.length / 2) * 20 + 5;
+        ctx.fillText(line, textX, textY);
+      });
+    });
+    
+    // Add footer
+    ctx.fillStyle = COLORS.gray;
+    ctx.font = '14px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Generated by PathFlow AI • ' + new Date().toLocaleDateString(), CANVAS_WIDTH / 2, CANVAS_HEIGHT - 30);
+    
+    setRoadmapGenerated(true);
+    setIsGenerating(false);
+  };
+
+  // Download roadmap as JPG
+  const downloadRoadmap = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    // Create download link
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `learning-roadmap-${Date.now()}.jpg`;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      if (onDownload) onDownload();
+    }, 'image/jpeg', 0.9);
+  };
+
+  // Auto-generate when component mounts
+  useEffect(() => {
+    if (steps && steps.length > 0) {
+      generateRoadmap();
+    }
+  }, [steps]);
+
+  if (!steps || steps.length === 0) {
+    return (
+      <div style={{
+        padding: '2rem',
+        textAlign: 'center',
+        color: '#a0a0a0',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        borderRadius: '10px',
+        border: '2px dashed rgba(60,26,107, 0.3)'
+      }}>
+        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🗺️</div>
+        <p>Generate a learning path first to create your roadmap!</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      marginTop: '2rem',
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      padding: '2rem',
+      borderRadius: '15px',
+      border: '1px solid rgba(60,26,107, 0.3)',
+      boxShadow: '0 4px 15px rgba(0,0,0,0.5), 0 0 30px rgba(60,26,107, 0.2)'
+    }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '1.5rem',
+        flexWrap: 'wrap',
+        gap: '1rem'
+      }}>
+        <h2 style={{
+          margin: 0,
+          color: 'white',
+          fontSize: '1.8rem',
+          textShadow: '0 0 10px rgba(60,26,107, 0.5)'
+        }}>
+          🗺️ Visual Roadmap
+        </h2>
+        
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button
+            onClick={generateRoadmap}
+            disabled={isGenerating}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: isGenerating ? '#6c757d' : '#3c1a6b',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: isGenerating ? 'not-allowed' : 'pointer',
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 0 10px rgba(60,26,107, 0.3)'
+            }}
+          >
+            {isGenerating ? '🔄 Generating...' : '🎨 Regenerate'}
+          </button>
+          
+          {roadmapGenerated && (
+            <button
+              onClick={downloadRoadmap}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 0 10px rgba(40, 167, 69, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#218838';
+                e.target.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = '#28a745';
+                e.target.style.transform = 'translateY(0)';
+              }}
+            >
+              📥 Download JPG
+            </button>
+          )}
+        </div>
+      </div>
+      
+      {isGenerating && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '200px',
+          color: '#a0a0a0'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem'
+          }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              border: '4px solid #f3f3f3',
+              borderTop: '4px solid #3c1a6b',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+            <p>Creating your visual roadmap...</p>
+          </div>
+        </div>
+      )}
+      
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        borderRadius: '10px',
+        padding: '1rem',
+        border: '1px solid rgba(60,26,107, 0.2)'
+      }}>
+        <canvas
+          ref={canvasRef}
+          style={{
+            maxWidth: '100%',
+            height: 'auto',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            display: isGenerating ? 'none' : 'block'
+          }}
+        />
+      </div>
+      
+      {roadmapGenerated && (
+        <div style={{
+          marginTop: '1rem',
+          padding: '1rem',
+          backgroundColor: 'rgba(40, 167, 69, 0.2)',
+          borderRadius: '8px',
+          border: '1px solid rgba(40, 167, 69, 0.3)',
+          textAlign: 'center',
+          color: '#d4edda'
+        }}>
+          ✅ Roadmap generated successfully! Click "Download JPG" to save it.
+        </div>
+      )}
+      
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+// Enhanced Generate Path Form Page with Roadmap Integration
 function GeneratePathForm() {
   const { apiUrl, loading, setLoading, error, setError } = useAppContext();
   const [skills, setSkills] = useState("");
   const [goal, setGoal] = useState("");
   const [result, setResult] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
+  const [showRoadmap, setShowRoadmap] = useState(false); // New state for roadmap view
 
   // Form validation
   const validateForm = () => {
@@ -398,6 +768,7 @@ function GeneratePathForm() {
     setLoading(true);
     setError("");
     setResult(null);
+    setShowRoadmap(false); // Reset view when generating new path
 
     try {
       const response = await fetch(`${apiUrl}/generate-path`, {
@@ -444,12 +815,18 @@ function GeneratePathForm() {
     setResult(null);
     setError("");
     setValidationErrors({});
+    setShowRoadmap(false); // Reset roadmap view
+  };
+
+  const handleDownloadComplete = () => {
+    // Optional: Add success message or analytics tracking
+    console.log("Roadmap downloaded successfully!");
   };
 
   return (
     <div style={{
       padding: "2rem",
-      maxWidth: "900px",
+      maxWidth: "1200px", // Increased width for roadmap
       margin: "0 auto",
       fontFamily: "Arial, sans-serif",
       color: "white",
@@ -620,12 +997,65 @@ function GeneratePathForm() {
         {loading && <LoadingSpinner message="Generating your personalized learning path..." />}
 
         {result && !loading && (
-          <LearningPathDisplay
-            steps={result.steps}
-            skills={result.skills}
-            goal={result.goal}
-            metadata={result.metadata}
-          />
+          <>
+            {/* View Toggle Buttons */}
+            <div style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "1rem",
+              marginBottom: "2rem"
+            }}>
+              <button
+                onClick={() => setShowRoadmap(false)}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: !showRoadmap ? "#3c1a6b" : "rgba(60,26,107, 0.3)",
+                  color: "white",
+                  border: "1px solid rgba(60,26,107, 0.5)",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                  fontWeight: "bold",
+                  transition: "all 0.3s ease"
+                }}
+              >
+                📋 Text View
+              </button>
+              <button
+                onClick={() => setShowRoadmap(true)}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: showRoadmap ? "#3c1a6b" : "rgba(60,26,107, 0.3)",
+                  color: "white",
+                  border: "1px solid rgba(60,26,107, 0.5)",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                  fontWeight: "bold",
+                  transition: "all 0.3s ease"
+                }}
+              >
+                🗺️ Roadmap View
+              </button>
+            </div>
+
+            {/* Conditional Rendering */}
+            {showRoadmap ? (
+              <RoadmapGenerator
+                steps={result.steps}
+                skills={result.skills}
+                goal={result.goal}
+                onDownload={handleDownloadComplete}
+              />
+            ) : (
+              <LearningPathDisplay
+                steps={result.steps}
+                skills={result.skills}
+                goal={result.goal}
+                metadata={result.metadata}
+              />
+            )}
+          </>
         )}
 
         {!loading && !result && !error && (
