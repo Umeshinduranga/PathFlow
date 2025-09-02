@@ -154,7 +154,7 @@ app.get("/", (req, res) => {
     message: "🚀 Learning Path Generator API",
     version: "1.0.0",
     status: "running",
-    endpoints: ["/generate-path"]
+    endpoints: ["/generate-path", "/generate-roadmap-steps"]
   });
 });
 
@@ -176,7 +176,7 @@ app.get("/health", async (req, res) => {
   }
 });
 
-// Main AI-powered learning path generation
+// Main AI-powered learning path generation (detailed text steps)
 app.post("/generate-path", aiLimiter, validateLearningPathInput, async (req, res) => {
   const { skills, goal } = req.body;
   const startTime = Date.now();
@@ -281,7 +281,42 @@ Format: Return only the numbered steps, nothing else.
   }
 });
 
-// Get saved learning paths (for future dashboard feature)
+// NEW: Simplified roadmap step generator (for canvas)
+app.post("/generate-roadmap-steps", aiLimiter, validateLearningPathInput, async (req, res) => {
+  const { skills, goal } = req.body;
+
+  try {
+    const prompt = `
+Generate a simplified learning roadmap.
+Input skills: "${skills}"
+Goal: "${goal}"
+
+Rules:
+- Exactly 6 steps
+- Each step max 6 words
+- Start with an action verb
+- Return only the plain steps (no numbering, no explanation)
+`;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+
+    const steps = text
+      .split("\n")
+      .map(s => s.replace(/^\d+\.\s*/, "").trim())
+      .filter(Boolean);
+
+    res.json({
+      success: true,
+      steps
+    });
+  } catch (err) {
+    console.error("❌ Roadmap generation failed:", err.message);
+    res.status(500).json({ success: false, error: "Failed to generate roadmap" });
+  }
+});
+
+// Get saved learning paths (for dashboard)
 app.get("/paths", async (req, res) => {
   if (!isMongoConnected) {
     return res.status(503).json({
