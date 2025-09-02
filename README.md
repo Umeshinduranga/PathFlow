@@ -261,6 +261,7 @@ We welcome contributions from the community! Here's how you can help:
 - ✅ AI-powered learning path generation using Google Gemini API
 - ✅ Responsive React frontend with Tailwind CSS
 - ✅ Integrated frontend/backend deployment
+- ✅ Rodmap generator integrates with generator path form
 
 ### Planned Features
 - 📋 Progress tracking with milestone completion
