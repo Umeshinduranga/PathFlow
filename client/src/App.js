@@ -470,10 +470,142 @@ const RoadmapGenerator = ({ steps, skills, goal, onDownload }) => {
     
     ctx.setLineDash([]); // Reset dash pattern
     
+    // Function to simplify step text for roadmap display
+    const simplifyStepText = (stepText, stepIndex) => {
+      const text = stepText.replace(/^\d+\.\s*/, '').toLowerCase().trim();
+      
+      // Enhanced patterns with better extraction logic
+      const extractors = [
+        // Direct technology/language mentions
+        {
+          regex: /\b(python|java|javascript|js|typescript|react|angular|vue|node\.?js?|express|django|flask|spring|html|css|sass|scss|bootstrap|tailwind)\b/i,
+          format: (match) => `Learn ${capitalizeFirst(match)}`
+        },
+        {
+          regex: /\b(mysql|postgresql|mongodb|redis|sqlite|database|sql)\b/i,
+          format: (match) => `Learn ${capitalizeFirst(match === 'database' ? 'Databases' : match)}`
+        },
+        {
+          regex: /\b(docker|kubernetes|aws|azure|gcp|git|github|gitlab|ci\/cd|devops)\b/i,
+          format: (match) => `Learn ${capitalizeFirst(match)}`
+        },
+        {
+          regex: /\b(rest|api|graphql|microservices|authentication|security|testing|unit test|integration)\b/i,
+          format: (match) => `Learn ${capitalizeFirst(match)}`
+        },
+        
+        // Project-related activities
+        {
+          regex: /build.*?(project|application|app|website|portfolio|demo)/i,
+          format: () => 'Build Projects'
+        },
+        {
+          regex: /create.*?(portfolio|website|project|application|app)/i,
+          format: () => 'Create Portfolio'
+        },
+        {
+          regex: /develop.*?(application|app|website|project|solution)/i,
+          format: () => 'Develop Apps'
+        },
+        {
+          regex: /design.*?(ui|ux|interface|user experience|website)/i,
+          format: () => 'Design UI/UX'
+        },
+        
+        // Learning activities
+        {
+          regex: /study.*?(fundamentals|basics|concepts|principles)/i,
+          format: () => 'Study Fundamentals'
+        },
+        {
+          regex: /learn.*?(advanced|complex|deeper)/i,
+          format: () => 'Advanced Learning'
+        },
+        {
+          regex: /practice.*?(coding|programming|development)/i,
+          format: () => 'Practice Coding'
+        },
+        {
+          regex: /master.*?(skills|techniques|concepts)/i,
+          format: () => 'Master Skills'
+        },
+        
+        // Career activities
+        {
+          regex: /network|networking|connect.*?(professional|developer|community)/i,
+          format: () => 'Network & Connect'
+        },
+        {
+          regex: /apply.*?(job|position|role|career)/i,
+          format: () => 'Apply for Jobs'
+        },
+        {
+          regex: /interview|preparation|prepare.*?interview/i,
+          format: () => 'Interview Prep'
+        },
+        {
+          regex: /job.*?(search|hunt|application)/i,
+          format: () => 'Job Search'
+        },
+        
+        // General activities
+        {
+          regex: /deploy|deployment|hosting|production/i,
+          format: () => 'Deploy Apps'
+        },
+        {
+          regex: /test|testing|qa|quality/i,
+          format: () => 'Test & Debug'
+        },
+        {
+          regex: /optimize|optimization|performance/i,
+          format: () => 'Optimize Code'
+        }
+      ];
+      
+      // Helper function to capitalize first letter
+      function capitalizeFirst(str) {
+        if (!str) return '';
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+      }
+      
+      // Try each extractor pattern
+      for (const extractor of extractors) {
+        const match = text.match(extractor.regex);
+        if (match) {
+          const result = extractor.format(match[1] || match[0]);
+          if (result && result.length > 0) {
+            return result;
+          }
+        }
+      }
+      
+      // Enhanced fallback logic
+      const meaningfulWords = text
+        .replace(/[^\w\s]/g, ' ') // Remove special characters
+        .split(' ')
+        .filter(word => 
+          word.length > 2 && 
+          !['the', 'and', 'for', 'your', 'you', 'with', 'that', 'this', 'from', 'into', 'about', 'will', 'can', 'should', 'would', 'could', 'must', 'need', 'want', 'make', 'get', 'use', 'work', 'learn', 'study', 'understand', 'know', 'take', 'start', 'begin', 'complete'].includes(word.toLowerCase())
+        );
+      
+      if (meaningfulWords.length >= 2) {
+        const key1 = capitalizeFirst(meaningfulWords[0]);
+        const key2 = capitalizeFirst(meaningfulWords[1]);
+        return `${key1} ${key2}`;
+      } else if (meaningfulWords.length === 1) {
+        return capitalizeFirst(meaningfulWords[0]);
+      }
+      
+      // Final fallback
+      return `Step ${stepIndex + 1}`;
+    };
+
     // Draw step nodes and text
     steps.forEach((step, index) => {
       const pos = positions[index];
-      const stepText = step.replace(/^\d+\.\s*/, '');
+      const originalStepText = step.replace(/^\d+\.\s*/, '');
+      const simplifiedText = simplifyStepText(originalStepText, index);
       
       // Draw node circle with gradient effect
       const gradient = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, NODE_RADIUS);
@@ -497,13 +629,13 @@ const RoadmapGenerator = ({ steps, skills, goal, onDownload }) => {
       ctx.textAlign = 'center';
       ctx.fillText((index + 1).toString(), pos.x, pos.y + 8);
       
-      // Draw step text
+      // Draw simplified step text
       ctx.fillStyle = COLORS.white;
-      ctx.font = 'bold 16px Arial, sans-serif';
+      ctx.font = 'bold 18px Arial, sans-serif';
       
-      // Word wrap for long text
-      const words = stepText.split(' ');
-      const maxWidth = 200;
+      // Word wrap for simplified text (should be shorter now)
+      const words = simplifiedText.split(' ');
+      const maxWidth = 160; // Reduced width since text is shorter
       let lines = [];
       let currentLine = words[0];
       
@@ -519,12 +651,17 @@ const RoadmapGenerator = ({ steps, skills, goal, onDownload }) => {
       }
       lines.push(currentLine);
       
+      // Limit to maximum 2 lines for clean look
+      if (lines.length > 2) {
+        lines = [lines[0], lines[1].substring(0, 10) + '...'];
+      }
+      
       // Position text based on node position
-      const textX = pos.isEven ? pos.x - NODE_RADIUS - 20 : pos.x + NODE_RADIUS + 20;
+      const textX = pos.isEven ? pos.x - NODE_RADIUS - 15 : pos.x + NODE_RADIUS + 15;
       ctx.textAlign = pos.isEven ? 'right' : 'left';
       
       lines.forEach((line, lineIndex) => {
-        const textY = pos.y + (lineIndex - lines.length / 2) * 20 + 5;
+        const textY = pos.y + (lineIndex - lines.length / 2) * 22 + 5;
         ctx.fillText(line, textX, textY);
       });
     });
