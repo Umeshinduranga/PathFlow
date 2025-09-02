@@ -363,6 +363,7 @@ const LearningPathDisplay = ({ steps, skills, goal, metadata }) => (
 // Roadmap Generator Component (inline)
 const RoadmapGenerator = ({ steps, skills, goal, onDownload }) => {
   const canvasRef = useRef(null);
+  const { apiUrl } = useAppContext();  // use apiUrl from context
   const [isGenerating, setIsGenerating] = useState(false);
   const [roadmapGenerated, setRoadmapGenerated] = useState(false);
 
@@ -384,6 +385,23 @@ const RoadmapGenerator = ({ steps, skills, goal, onDownload }) => {
     connection: '#4a2c7a'
   };
 
+  // 🔑 Fetch simplified roadmap steps
+  const fetchSimplifiedSteps = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/generate-roadmap-steps`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skills, goal })
+      });
+      if (!response.ok) throw new Error("Failed to fetch roadmap steps");
+      const data = await response.json();
+      return data.steps || steps;
+    } catch (err) {
+      console.error("Error fetching simplified steps:", err.message);
+      return steps; // fallback to detailed steps
+    }
+  };
+
   // Generate roadmap on canvas
   const generateRoadmap = async () => {
     setIsGenerating(true);
@@ -391,6 +409,7 @@ const RoadmapGenerator = ({ steps, skills, goal, onDownload }) => {
     // Small delay to show loading state
     await new Promise(resolve => setTimeout(resolve, 500));
     
+    const simplifiedSteps = await fetchSimplifiedSteps();
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -435,7 +454,7 @@ const RoadmapGenerator = ({ steps, skills, goal, onDownload }) => {
     const startY = 200;
     const centerX = CANVAS_WIDTH / 2;
     
-    steps.forEach((step, index) => {
+    simplifiedSteps.forEach((step, index) => {
       const isEven = index % 2 === 0;
       const offsetX = isEven ? -SPACING_X : SPACING_X;
       const x = centerX + offsetX;
@@ -602,7 +621,7 @@ const RoadmapGenerator = ({ steps, skills, goal, onDownload }) => {
     };
 
     // Draw step nodes and text
-    steps.forEach((step, index) => {
+    simplifiedSteps.forEach((step, index) => {
       const pos = positions[index];
       const originalStepText = step.replace(/^\d+\.\s*/, '');
       const simplifiedText = simplifyStepText(originalStepText, index);
