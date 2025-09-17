@@ -17,6 +17,10 @@ A full-stack web application that generates personalized learning paths using AI
 
 ## PathFlow ⬇️
 
+<img width="1887" height="870" alt="image" src="https://github.com/user-attachments/assets/d0ec5f16-8695-4e04-b216-50f22cdc47df" />
+
+---
+
 <img width="1892" height="880" alt="image" src="https://github.com/user-attachments/assets/8b735a5b-dee2-4540-a246-30823f0ffd81" />
 
 ---
