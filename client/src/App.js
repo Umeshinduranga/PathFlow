@@ -177,7 +177,7 @@ const SignIn = () => {
       alignItems: "center",
       justifyContent: "center",
       background: "radial-gradient(ellipse at center, #0a0a1a 0%, #0f0a1f 50%, #000000 100%)",
-      padding: "2rem"
+
     }}>
       <div style={{
         width: "100%",
