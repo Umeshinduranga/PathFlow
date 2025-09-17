@@ -19,6 +19,32 @@ const AppContextProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [apiUrl] = useState(process.env.REACT_APP_API_URL || "");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Mock users for authentication (since no DB connection yet)
+  const mockUsers = [
+    { username: "admin", password: "admin123", name: "Administrator" },
+    { username: "user", password: "user123", name: "Regular User" },
+    { username: "demo", password: "demo123", name: "Demo User" },
+    { username: "test", password: "test123", name: "Test User" },
+    { username: "pathflow", password: "pathflow123", name: "PathFlow User" }
+  ];
+
+  const login = (username, password) => {
+    const user = mockUsers.find(u => u.username === username && u.password === password);
+    if (user) {
+      setIsAuthenticated(true);
+      setCurrentUser(user);
+      return { success: true, user };
+    }
+    return { success: false, error: "Invalid username or password" };
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+  };
 
   const value = {
     learningPaths,
@@ -27,7 +53,12 @@ const AppContextProvider = ({ children }) => {
     setLoading,
     error,
     setError,
-    apiUrl
+    apiUrl,
+    isAuthenticated,
+    currentUser,
+    login,
+    logout,
+    mockUsers
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
@@ -110,71 +141,381 @@ const LoadingSpinner = ({ message = "Loading..." }) => (
   </div>
 );
 
-// Navigation Component
-const Navigation = () => (
-  <nav style={{
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    padding: "1rem 2rem",
-    marginBottom: "2rem",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(60,26,107, 0.2)",
-    border: "1px solid rgba(60,26,107, 0.3)"
-  }}>
+// Sign In Component
+const SignIn = () => {
+  const { login, mockUsers } = useAppContext();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showCredentials, setShowCredentials] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    const result = login(username, password);
+    if (!result.success) {
+      setError(result.error);
+    }
+    setLoading(false);
+  };
+
+  const handleDemoLogin = (demoUser) => {
+    setUsername(demoUser.username);
+    setPassword(demoUser.password);
+  };
+
+  return (
     <div style={{
-      maxWidth: "1200px",
-      margin: "0 auto",
+      minHeight: "100vh",
       display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center"
+      alignItems: "center",
+      justifyContent: "center",
+      background: "radial-gradient(ellipse at center, #0a0a1a 0%, #0f0a1f 50%, #000000 100%)",
+      padding: "2rem"
     }}>
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
-      <Link to="/" style={{
-        color: "white",
-        textDecoration: "none",
-        fontSize: "1.5rem",
-        fontWeight: "bold",
-        fontFamily: 'Poppins',
-        textShadow: "0 0 10px rgba(60,26,107, 0.5)"
+      <div style={{
+        width: "100%",
+        maxWidth: "400px",
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        padding: "3rem",
+        borderRadius: "20px",
+        boxShadow: "0 10px 40px rgba(0, 0, 0, 0.6), 0 0 50px rgba(60,26,107, 0.3)",
+        border: "1px solid rgba(60,26,107, 0.4)"
       }}>
-        🎯 PathFlow
-      </Link>
-      <div>
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+          <h1 style={{
+            color: "white",
+            fontSize: "2.5rem",
+            margin: "0 0 0.5rem 0",
+            textShadow: "0 0 20px rgba(60,26,107, 0.8)",
+            fontFamily: "'Poppins', sans-serif"
+          }}>
+            🎯 PathFlow
+          </h1>
+          <p style={{
+            color: "#a0a0a0",
+            margin: 0,
+            fontSize: "1.1rem"
+          }}>
+            AI-Powered Learning Path Generator
+          </p>
+        </div>
+
+        {/* Sign In Form */}
+        <form onSubmit={handleSubmit} style={{ marginBottom: "1.5rem" }}>
+          <div style={{ marginBottom: "1.5rem" }}>
+            <label style={{
+              display: "block",
+              color: "white",
+              marginBottom: "0.5rem",
+              fontWeight: "bold"
+            }}>
+              Username
+            </label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
+              required
+              disabled={loading}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                borderRadius: "10px",
+                border: "1px solid rgba(60,26,107, 0.5)",
+                backgroundColor: "rgba(0, 0, 0, 0.7)",
+                color: "white",
+                fontSize: "1rem",
+                boxSizing: "border-box",
+                transition: "border-color 0.3s ease"
+              }}
+              onFocus={(e) => e.target.style.borderColor = "#3c1a6b"}
+              onBlur={(e) => e.target.style.borderColor = "rgba(60,26,107, 0.5)"}
+            />
+          </div>
+
+          <div style={{ marginBottom: "1.5rem" }}>
+            <label style={{
+              display: "block",
+              color: "white",
+              marginBottom: "0.5rem",
+              fontWeight: "bold"
+            }}>
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              required
+              disabled={loading}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                borderRadius: "10px",
+                border: "1px solid rgba(60,26,107, 0.5)",
+                backgroundColor: "rgba(0, 0, 0, 0.7)",
+                color: "white",
+                fontSize: "1rem",
+                boxSizing: "border-box",
+                transition: "border-color 0.3s ease"
+              }}
+              onFocus={(e) => e.target.style.borderColor = "#3c1a6b"}
+              onBlur={(e) => e.target.style.borderColor = "rgba(60,26,107, 0.5)"}
+            />
+          </div>
+
+          {error && (
+            <div style={{
+              backgroundColor: "rgba(220, 53, 69, 0.2)",
+              color: "#f5c6cb",
+              padding: "1rem",
+              borderRadius: "8px",
+              marginBottom: "1.5rem",
+              border: "1px solid rgba(220, 53, 69, 0.3)",
+              textAlign: "center"
+            }}>
+              ⚠️ {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading || !username || !password}
+            style={{
+              width: "100%",
+              padding: "12px",
+              backgroundColor: loading ? "#6c757d" : "#3c1a6b",
+              color: "white",
+              border: "none",
+              borderRadius: "10px",
+              fontSize: "1.1rem",
+              fontWeight: "bold",
+              cursor: loading ? "not-allowed" : "pointer",
+              transition: "all 0.3s ease",
+              boxShadow: "0 4px 15px rgba(60,26,107, 0.4)",
+              opacity: (!username || !password) ? 0.6 : 1
+            }}
+            onMouseEnter={(e) => {
+              if (!loading && username && password) {
+                e.target.style.backgroundColor = "#2d1554";
+                e.target.style.transform = "translateY(-1px)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!loading) {
+                e.target.style.backgroundColor = "#3c1a6b";
+                e.target.style.transform = "translateY(0)";
+              }
+            }}
+          >
+            {loading ? "🔄 Signing In..." : "🚀 Sign In"}
+          </button>
+        </form>
+
+        {/* Demo Credentials Toggle */}
+        <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+          <button
+            type="button"
+            onClick={() => setShowCredentials(!showCredentials)}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#3c1a6b",
+              textDecoration: "underline",
+              cursor: "pointer",
+              fontSize: "0.9rem"
+            }}
+          >
+            {showCredentials ? "Hide" : "Show"} Demo Credentials
+          </button>
+        </div>
+
+        {/* Demo Credentials */}
+        {showCredentials && (
+          <div style={{
+            backgroundColor: "rgba(60,26,107, 0.2)",
+            padding: "1.5rem",
+            borderRadius: "10px",
+            border: "1px solid rgba(60,26,107, 0.3)"
+          }}>
+            <h4 style={{
+              color: "white",
+              margin: "0 0 1rem 0",
+              textAlign: "center"
+            }}>
+              🔑 Demo Accounts
+            </h4>
+            <div style={{ fontSize: "0.9rem" }}>
+              {mockUsers.map((user, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "0.5rem",
+                    marginBottom: "0.5rem",
+                    backgroundColor: "rgba(0, 0, 0, 0.5)",
+                    borderRadius: "6px",
+                    color: "white"
+                  }}
+                >
+                  <div>
+                    <strong>{user.username}</strong> / {user.password}
+                    <br />
+                    <span style={{ fontSize: "0.8rem", color: "#a0a0a0" }}>
+                      {user.name}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleDemoLogin(user)}
+                    style={{
+                      padding: "4px 8px",
+                      backgroundColor: "#3c1a6b",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      fontSize: "0.8rem"
+                    }}
+                  >
+                    Use
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div style={{
+          textAlign: "center",
+          marginTop: "2rem",
+          color: "#666",
+          fontSize: "0.9rem"
+        }}>
+          <p style={{ margin: 0 }}>
+            🤖 Powered by AI • No Database Required
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Navigation Component (Updated with logout)
+const Navigation = () => {
+  const { currentUser, logout } = useAppContext();
+
+  return (
+    <nav style={{
+      backgroundColor: "rgba(0, 0, 0, 0.7)",
+      padding: "1rem 2rem",
+      marginBottom: "2rem",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(60,26,107, 0.2)",
+      border: "1px solid rgba(60,26,107, 0.3)"
+    }}>
+      <div style={{
+        maxWidth: "1200px",
+        margin: "0 auto",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center"
+      }}>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
         <Link to="/" style={{
           color: "white",
           textDecoration: "none",
-          marginRight: "1rem",
-          padding: "0.5rem 1rem",
-          borderRadius: "4px",
-          transition: "background-color 0.3s",
-          fontFamily: 'Poppins',
+          fontSize: "1.5rem",
           fontWeight: "bold",
-          backgroundColor: "rgba(60,26,107, 0.3)",
-          borderRadius: "12px",
-          border: "1px solid rgba(60,26,107, 0.4)"
-        }}>
-          Home
-        </Link>
-        <Link to="/generate" style={{
-          color: "white",
-          textDecoration: "none",
-          padding: "0.5rem 1rem",
-          borderRadius: "4px",
-          transition: "background-color 0.3s",
           fontFamily: 'Poppins',
-          backgroundColor: "rgba(60,26,107, 0.3)",
-          borderRadius: "12px",
-          fontWeight: "bold",
-          border: "1px solid rgba(60,26,107, 0.4)"
+          textShadow: "0 0 10px rgba(60,26,107, 0.5)"
         }}>
-          Generate Path
+          🎯 PathFlow
         </Link>
+        
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <Link to="/" style={{
+            color: "white",
+            textDecoration: "none",
+            marginRight: "1rem",
+            padding: "0.5rem 1rem",
+            borderRadius: "12px",
+            transition: "background-color 0.3s",
+            fontFamily: 'Poppins',
+            fontWeight: "bold",
+            backgroundColor: "rgba(60,26,107, 0.3)",
+            border: "1px solid rgba(60,26,107, 0.4)"
+          }}>
+            Home
+          </Link>
+          <Link to="/generate" style={{
+            color: "white",
+            textDecoration: "none",
+            padding: "0.5rem 1rem",
+            borderRadius: "12px",
+            transition: "background-color 0.3s",
+            fontFamily: 'Poppins',
+            backgroundColor: "rgba(60,26,107, 0.3)",
+            fontWeight: "bold",
+            border: "1px solid rgba(60,26,107, 0.4)",
+            marginRight: "1rem"
+          }}>
+            Generate Path
+          </Link>
+          
+          {/* User Info and Logout */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "1rem",
+            padding: "0.5rem 1rem",
+            backgroundColor: "rgba(60,26,107, 0.2)",
+            borderRadius: "12px",
+            border: "1px solid rgba(60,26,107, 0.3)"
+          }}>
+            <span style={{
+              color: "white",
+              fontFamily: 'Poppins',
+              fontSize: "0.9rem"
+            }}>
+              👋 Hi, {currentUser?.name}!
+            </span>
+            <button
+              onClick={logout}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#ff6b6b",
+                cursor: "pointer",
+                fontSize: "0.9rem",
+                fontFamily: 'Poppins',
+                fontWeight: "bold"
+              }}
+            >
+              🚪 Logout
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-  </nav>
-);
+    </nav>
+  );
+};
 
 // Enhanced Landing Page
 function Home() {
   const navigate = useNavigate();
+  const { currentUser } = useAppContext();
 
   return (
     <div style={{
@@ -201,7 +542,7 @@ function Home() {
           marginBottom: "1rem",
           textShadow: "2px 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(60,26,107, 0.5)"
         }}>
-          🎯 AI-Powered Learning Path Generator
+          🎯 Welcome to PathFlow, {currentUser?.name}!
         </h1>
         <p style={{ 
           fontSize: "1.3rem", 
@@ -1261,6 +1602,17 @@ function NotFound() {
   );
 }
 
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated } = useAppContext();
+  
+  if (!isAuthenticated) {
+    return <SignIn />;
+  }
+  
+  return children;
+};
+
 // Main App Component
 function App() {
   return (
@@ -1273,27 +1625,35 @@ function App() {
             backgroundRepeat: "repeat, no-repeat",
             backgroundSize: "500px 500px, cover"
           }}>
-            <Navigation />
-            <main>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/generate" element={<GeneratePathForm />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-            
-            <footer style={{
-              textAlign: "center",
-              padding: "2rem",
-              color: "#a0a0a0",
-              borderTop: "1px solid rgba(60,26,107, 0.3)",
-              marginTop: "4rem",
-              backgroundColor: "rgba(0, 0, 0, 0.7)"
-            }}>
-              <p style={{ margin: 0 }}>
-                Using React & Gemini AI
-              </p>
-            </footer>
+            <Routes>
+              <Route path="/*" element={
+                <ProtectedRoute>
+                  <>
+                    <Navigation />
+                    <main>
+                      <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/generate" element={<GeneratePathForm />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </main>
+                    
+                    <footer style={{
+                      textAlign: "center",
+                      padding: "2rem",
+                      color: "#a0a0a0",
+                      borderTop: "1px solid rgba(60,26,107, 0.3)",
+                      marginTop: "4rem",
+                      backgroundColor: "rgba(0, 0, 0, 0.7)"
+                    }}>
+                      <p style={{ margin: 0 }}>
+                        Using React & Gemini AI
+                      </p>
+                    </footer>
+                  </>
+                </ProtectedRoute>
+              } />
+            </Routes>
           </div>
         </Router>
       </AppContextProvider>
