@@ -13,6 +13,23 @@ A full-stack web application that generates personalized learning paths using AI
 - **Responsive Design**: Modern, mobile-friendly interface built with React and Tailwind CSS
 - **Visual Analytics**: Progress visualization with Chart.js (planned feature)
 
+---
+
+## PathFlow ⬇️
+
+<img width="1892" height="880" alt="image" src="https://github.com/user-attachments/assets/8b735a5b-dee2-4540-a246-30823f0ffd81" />
+
+---
+
+<img width="1868" height="882" alt="image" src="https://github.com/user-attachments/assets/04291133-87be-4150-8ee0-2b860df1e82c" />
+
+---
+
+<img width="1876" height="877" alt="image" src="https://github.com/user-attachments/assets/0df7e293-4954-44a7-9ca9-48c4d6f7924a" />
+
+
+
+
 ## 🛠️ Tech Stack
 
 ### Frontend
