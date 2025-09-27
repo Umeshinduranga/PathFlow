@@ -1,28 +1,36 @@
-import express from "express";
-import LearningPath from "../models/LearningPath.js";
+import mongoose from "mongoose";
 
-const router = express.Router();
-
-// ✅ Save a generated path
-router.post("/", async (req, res) => {
-  try {
-    const { skills, goal, path } = req.body;
-    const newPath = new LearningPath({ skills, goal, path });
-    await newPath.save();
-    res.status(201).json(newPath);
-  } catch (error) {
-    res.status(500).json({ message: "Error saving path", error });
+const learningPathSchema = new mongoose.Schema({
+  skills: {
+    type: [String],
+    required: true
+  },
+  goal: {
+    type: String,
+    required: true
+  },
+  path: {
+    type: [String],
+    required: true
+  },
+  generatedBy: {
+    type: String,
+    enum: ['ai', 'manual', 'fallback'],
+    default: 'ai'
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  metadata: {
+    type: Object,
+    default: {}
   }
+}, {
+  timestamps: true
 });
 
-// ✅ Get all saved paths
-router.get("/", async (req, res) => {
-  try {
-    const paths = await LearningPath.find();
-    res.json(paths);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching paths", error });
-  }
-});
+const LearningPath = mongoose.model('LearningPath', learningPathSchema);
 
-export default router;
+export default LearningPath;
