@@ -1,5 +1,6 @@
 import React, { useState, createContext, useContext, useEffect, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from "react-router-dom";
+import authService from "./services/authService";
 
 // Global Context for state management
 const AppContext = createContext();
@@ -18,32 +19,67 @@ const AppContextProvider = ({ children }) => {
   const [learningPaths, setLearningPaths] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [apiUrl] = useState(process.env.REACT_APP_API_URL || "");
+  const [apiUrl] = useState(process.env.REACT_APP_API_URL || "http://localhost:5000");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
 
-  // Mock users for authentication (since no DB connection yet)
-  const mockUsers = [
-    { username: "admin", password: "admin123", name: "Administrator" },
-    { username: "user", password: "user123", name: "Regular User" },
-    { username: "demo", password: "demo123", name: "Demo User" },
-    { username: "test", password: "test123", name: "Test User" },
-    { username: "pathflow", password: "pathflow123", name: "PathFlow User" }
+  // Initialize authentication state from localStorage
+  useEffect(() => {
+    const initAuth = () => {
+      if (authService.isAuthenticated()) {
+        setIsAuthenticated(true);
+        setCurrentUser(authService.getCurrentUser());
+      }
+    };
+    initAuth();
+  }, []);
+
+  // Demo users for quick login (these won't be saved to database)
+  const demoUsers = [
+    { username: "demo", password: "demo123", name: "Demo User", email: "demo@pathflow.com" },
+    { username: "test", password: "test123", name: "Test User", email: "test@pathflow.com" },
+    { username: "pathflow", password: "pathflow123", name: "PathFlow User", email: "pathflow@example.com" }
   ];
 
-  const login = (username, password) => {
-    const user = mockUsers.find(u => u.username === username && u.password === password);
-    if (user) {
+  const login = async (usernameOrEmail, password) => {
+    try {
+      setLoading(true);
+      const response = await authService.login({ usernameOrEmail, password });
       setIsAuthenticated(true);
-      setCurrentUser(user);
-      return { success: true, user };
+      setCurrentUser(response.user);
+      return { success: true, user: response.user };
+    } catch (error) {
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
     }
-    return { success: false, error: "Invalid username or password" };
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    setCurrentUser(null);
+  const register = async (userData) => {
+    try {
+      setLoading(true);
+      const response = await authService.register(userData);
+      setIsAuthenticated(true);
+      setCurrentUser(response.user);
+      return { success: true, user: response.user };
+    } catch (error) {
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await authService.logout();
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still logout locally even if server request fails
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+    }
   };
 
   const value = {
@@ -57,8 +93,9 @@ const AppContextProvider = ({ children }) => {
     isAuthenticated,
     currentUser,
     login,
+    register,
     logout,
-    mockUsers
+    demoUsers
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
@@ -143,31 +180,90 @@ const LoadingSpinner = ({ message = "Loading..." }) => (
 
 // Sign In Component
 const SignIn = () => {
-  const { login, mockUsers } = useAppContext();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const { login, register, demoUsers } = useAppContext();
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState({
+    usernameOrEmail: "",
+    password: "",
+    username: "",
+    email: "",
+    name: "",
+    confirmPassword: ""
+  });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showCredentials, setShowCredentials] = useState(false);
+
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      let result;
+      
+      if (isLogin) {
+        result = await login(formData.usernameOrEmail, formData.password);
+      } else {
+        // Validate passwords match
+        if (formData.password !== formData.confirmPassword) {
+          setError("Passwords don't match");
+          setLoading(false);
+          return;
+        }
+        
+        result = await register({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          name: formData.name
+        });
+      }
 
-    const result = login(username, password);
-    if (!result.success) {
-      setError(result.error);
+      if (!result.success) {
+        setError(result.error);
+      }
+    } catch (error) {
+      setError(error.message || "An error occurred");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const handleDemoLogin = (demoUser) => {
-    setUsername(demoUser.username);
-    setPassword(demoUser.password);
+  const handleDemoLogin = async (demoUser) => {
+    setError("");
+    setLoading(true);
+    
+    try {
+      const result = await login(demoUser.username, demoUser.password);
+      if (!result.success) {
+        setError(result.error);
+      }
+    } catch (error) {
+      setError(error.message || "Demo login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleMode = () => {
+    setIsLogin(!isLogin);
+    setError("");
+    setFormData({
+      usernameOrEmail: "",
+      password: "",
+      username: "",
+      email: "",
+      name: "",
+      confirmPassword: ""
+    });
   };
 
   return (
@@ -208,71 +304,290 @@ const SignIn = () => {
           </p>
         </div>
 
-        {/* Sign In Form */}
-        <form onSubmit={handleSubmit} style={{ marginBottom: "1.5rem" }}>
-          <div style={{ marginBottom: "1.5rem" }}>
-            <label style={{
-              display: "block",
-              color: "white",
-              marginBottom: "0.5rem",
-              fontWeight: "bold"
-            }}>
-              Username
-            </label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
-              required
-              disabled={loading}
+        {/* Mode Toggle */}
+        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+          <div style={{
+            display: "inline-flex",
+            backgroundColor: "rgba(60,26,107, 0.2)",
+            borderRadius: "25px",
+            padding: "4px",
+            border: "1px solid rgba(60,26,107, 0.3)"
+          }}>
+            <button
+              type="button"
+              onClick={() => setIsLogin(true)}
               style={{
-                width: "100%",
-                padding: "12px 16px",
-                borderRadius: "10px",
-                border: "1px solid rgba(60,26,107, 0.5)",
-                backgroundColor: "rgba(0, 0, 0, 0.7)",
+                padding: "8px 20px",
+                backgroundColor: isLogin ? "#3c1a6b" : "transparent",
                 color: "white",
-                fontSize: "1rem",
-                boxSizing: "border-box",
-                transition: "border-color 0.3s ease"
+                border: "none",
+                borderRadius: "20px",
+                cursor: "pointer",
+                fontSize: "0.9rem",
+                transition: "all 0.3s ease"
               }}
-              onFocus={(e) => e.target.style.borderColor = "#3c1a6b"}
-              onBlur={(e) => e.target.style.borderColor = "rgba(60,26,107, 0.5)"}
-            />
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsLogin(false)}
+              style={{
+                padding: "8px 20px",
+                backgroundColor: !isLogin ? "#3c1a6b" : "transparent",
+                color: "white",
+                border: "none",
+                borderRadius: "20px",
+                cursor: "pointer",
+                fontSize: "0.9rem",
+                transition: "all 0.3s ease"
+              }}
+            >
+              Sign Up
+            </button>
           </div>
+        </div>
 
-          <div style={{ marginBottom: "1.5rem" }}>
-            <label style={{
-              display: "block",
-              color: "white",
-              marginBottom: "0.5rem",
-              fontWeight: "bold"
-            }}>
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-              disabled={loading}
-              style={{
-                width: "100%",
-                padding: "12px 16px",
-                borderRadius: "10px",
-                border: "1px solid rgba(60,26,107, 0.5)",
-                backgroundColor: "rgba(0, 0, 0, 0.7)",
-                color: "white",
-                fontSize: "1rem",
-                boxSizing: "border-box",
-                transition: "border-color 0.3s ease"
-              }}
-              onFocus={(e) => e.target.style.borderColor = "#3c1a6b"}
-              onBlur={(e) => e.target.style.borderColor = "rgba(60,26,107, 0.5)"}
-            />
-          </div>
+        {/* Authentication Form */}
+        <form onSubmit={handleSubmit} style={{ marginBottom: "1.5rem" }}>
+          {/* Login Form */}
+          {isLogin ? (
+            <>
+              <div style={{ marginBottom: "1.5rem" }}>
+                <label style={{
+                  display: "block",
+                  color: "white",
+                  marginBottom: "0.5rem",
+                  fontWeight: "bold"
+                }}>
+                  Username or Email
+                </label>
+                <input
+                  type="text"
+                  name="usernameOrEmail"
+                  value={formData.usernameOrEmail}
+                  onChange={handleInputChange}
+                  placeholder="Enter your username or email"
+                  required
+                  disabled={loading}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(60,26,107, 0.5)",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    color: "white",
+                    fontSize: "1rem",
+                    boxSizing: "border-box",
+                    transition: "border-color 0.3s ease"
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = "#3c1a6b"}
+                  onBlur={(e) => e.target.style.borderColor = "rgba(60,26,107, 0.5)"}
+                />
+              </div>
+
+              <div style={{ marginBottom: "1.5rem" }}>
+                <label style={{
+                  display: "block",
+                  color: "white",
+                  marginBottom: "0.5rem",
+                  fontWeight: "bold"
+                }}>
+                  Password
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder="Enter your password"
+                  required
+                  disabled={loading}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(60,26,107, 0.5)",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    color: "white",
+                    fontSize: "1rem",
+                    boxSizing: "border-box",
+                    transition: "border-color 0.3s ease"
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = "#3c1a6b"}
+                  onBlur={(e) => e.target.style.borderColor = "rgba(60,26,107, 0.5)"}
+                />
+              </div>
+            </>
+          ) : (
+            /* Registration Form */
+            <>
+              <div style={{ marginBottom: "1.5rem" }}>
+                <label style={{
+                  display: "block",
+                  color: "white",
+                  marginBottom: "0.5rem",
+                  fontWeight: "bold"
+                }}>
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter your full name"
+                  required
+                  disabled={loading}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(60,26,107, 0.5)",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    color: "white",
+                    fontSize: "1rem",
+                    boxSizing: "border-box",
+                    transition: "border-color 0.3s ease"
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = "#3c1a6b"}
+                  onBlur={(e) => e.target.style.borderColor = "rgba(60,26,107, 0.5)"}
+                />
+              </div>
+
+              <div style={{ marginBottom: "1.5rem" }}>
+                <label style={{
+                  display: "block",
+                  color: "white",
+                  marginBottom: "0.5rem",
+                  fontWeight: "bold"
+                }}>
+                  Username
+                </label>
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  placeholder="Choose a username"
+                  required
+                  disabled={loading}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(60,26,107, 0.5)",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    color: "white",
+                    fontSize: "1rem",
+                    boxSizing: "border-box",
+                    transition: "border-color 0.3s ease"
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = "#3c1a6b"}
+                  onBlur={(e) => e.target.style.borderColor = "rgba(60,26,107, 0.5)"}
+                />
+              </div>
+
+              <div style={{ marginBottom: "1.5rem" }}>
+                <label style={{
+                  display: "block",
+                  color: "white",
+                  marginBottom: "0.5rem",
+                  fontWeight: "bold"
+                }}>
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="Enter your email"
+                  required
+                  disabled={loading}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(60,26,107, 0.5)",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    color: "white",
+                    fontSize: "1rem",
+                    boxSizing: "border-box",
+                    transition: "border-color 0.3s ease"
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = "#3c1a6b"}
+                  onBlur={(e) => e.target.style.borderColor = "rgba(60,26,107, 0.5)"}
+                />
+              </div>
+
+              <div style={{ marginBottom: "1.5rem" }}>
+                <label style={{
+                  display: "block",
+                  color: "white",
+                  marginBottom: "0.5rem",
+                  fontWeight: "bold"
+                }}>
+                  Password
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder="Create a password"
+                  required
+                  disabled={loading}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(60,26,107, 0.5)",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    color: "white",
+                    fontSize: "1rem",
+                    boxSizing: "border-box",
+                    transition: "border-color 0.3s ease"
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = "#3c1a6b"}
+                  onBlur={(e) => e.target.style.borderColor = "rgba(60,26,107, 0.5)"}
+                />
+              </div>
+
+              <div style={{ marginBottom: "1.5rem" }}>
+                <label style={{
+                  display: "block",
+                  color: "white",
+                  marginBottom: "0.5rem",
+                  fontWeight: "bold"
+                }}>
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  placeholder="Confirm your password"
+                  required
+                  disabled={loading}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(60,26,107, 0.5)",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    color: "white",
+                    fontSize: "1rem",
+                    boxSizing: "border-box",
+                    transition: "border-color 0.3s ease"
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = "#3c1a6b"}
+                  onBlur={(e) => e.target.style.borderColor = "rgba(60,26,107, 0.5)"}
+                />
+              </div>
+            </>
+          )}
 
           {error && (
             <div style={{
@@ -290,7 +605,7 @@ const SignIn = () => {
 
           <button
             type="submit"
-            disabled={loading || !username || !password}
+            disabled={loading}
             style={{
               width: "100%",
               padding: "12px",
@@ -302,11 +617,10 @@ const SignIn = () => {
               fontWeight: "bold",
               cursor: loading ? "not-allowed" : "pointer",
               transition: "all 0.3s ease",
-              boxShadow: "0 4px 15px rgba(60,26,107, 0.4)",
-              opacity: (!username || !password) ? 0.6 : 1
+              boxShadow: "0 4px 15px rgba(60,26,107, 0.4)"
             }}
             onMouseEnter={(e) => {
-              if (!loading && username && password) {
+              if (!loading) {
                 e.target.style.backgroundColor = "#2d1554";
                 e.target.style.transform = "translateY(-1px)";
               }
@@ -318,83 +632,104 @@ const SignIn = () => {
               }
             }}
           >
-            {loading ? "🔄 Signing In..." : "🚀 Sign In"}
+            {loading ? "🔄 Please wait..." : isLogin ? "🚀 Sign In" : "✨ Create Account"}
           </button>
         </form>
 
         {/* Demo Credentials Toggle */}
-        <div style={{ textAlign: "center", marginBottom: "1rem" }}>
-          <button
-            type="button"
-            onClick={() => setShowCredentials(!showCredentials)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#3c1a6b",
-              textDecoration: "underline",
-              cursor: "pointer",
-              fontSize: "0.9rem"
-            }}
-          >
-            {showCredentials ? "Hide" : "Show"} Demo Credentials
-          </button>
-        </div>
-
-        {/* Demo Credentials */}
-        {showCredentials && (
-          <div style={{
-            backgroundColor: "rgba(60,26,107, 0.2)",
-            padding: "1.5rem",
-            borderRadius: "10px",
-            border: "1px solid rgba(60,26,107, 0.3)"
-          }}>
-            <h4 style={{
-              color: "white",
-              margin: "0 0 1rem 0",
-              textAlign: "center"
-            }}>
-              🔑 Demo Accounts
-            </h4>
-            <div style={{ fontSize: "0.9rem" }}>
-              {mockUsers.map((user, index) => (
-                <div
-                  key={index}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "0.5rem",
-                    marginBottom: "0.5rem",
-                    backgroundColor: "rgba(0, 0, 0, 0.5)",
-                    borderRadius: "6px",
-                    color: "white"
-                  }}
-                >
-                  <div>
-                    <strong>{user.username}</strong> / {user.password}
-                    <br />
-                    <span style={{ fontSize: "0.8rem", color: "#a0a0a0" }}>
-                      {user.name}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => handleDemoLogin(user)}
-                    style={{
-                      padding: "4px 8px",
-                      backgroundColor: "#3c1a6b",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      fontSize: "0.8rem"
-                    }}
-                  >
-                    Use
-                  </button>
-                </div>
-              ))}
+        {isLogin && (
+          <>
+            <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+              <button
+                type="button"
+                onClick={() => setShowCredentials(!showCredentials)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#3c1a6b",
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  fontSize: "0.9rem"
+                }}
+              >
+                {showCredentials ? "Hide" : "Show"} Demo Credentials
+              </button>
             </div>
-          </div>
+
+            {/* Demo Credentials */}
+            {showCredentials && (
+              <div style={{
+                backgroundColor: "rgba(60,26,107, 0.2)",
+                padding: "1.5rem",
+                borderRadius: "10px",
+                border: "1px solid rgba(60,26,107, 0.3)"
+              }}>
+                <h4 style={{
+                  color: "white",
+                  margin: "0 0 1rem 0",
+                  textAlign: "center"
+                }}>
+                  🔑 Demo Accounts
+                </h4>
+                <div style={{ fontSize: "0.9rem" }}>
+                  {demoUsers.map((user, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "0.5rem",
+                        marginBottom: "0.5rem",
+                        backgroundColor: "rgba(0, 0, 0, 0.5)",
+                        borderRadius: "6px",
+                        color: "white"
+                      }}
+                    >
+                      <div>
+                        <strong>{user.username}</strong> / {user.password}
+                        <br />
+                        <span style={{ fontSize: "0.8rem", color: "#a0a0a0" }}>
+                          {user.name} - {user.email}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleDemoLogin(user)}
+                        disabled={loading}
+                        style={{
+                          padding: "4px 8px",
+                          backgroundColor: loading ? "#6c757d" : "#3c1a6b",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "4px",
+                          cursor: loading ? "not-allowed" : "pointer",
+                          fontSize: "0.8rem"
+                        }}
+                      >
+                        Use
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div style={{
+                  marginTop: "1rem",
+                  padding: "0.8rem",
+                  backgroundColor: "rgba(255, 193, 7, 0.2)",
+                  borderRadius: "6px",
+                  border: "1px solid rgba(255, 193, 7, 0.3)"
+                }}>
+                  <p style={{
+                    color: "#ffc107",
+                    fontSize: "0.8rem",
+                    margin: 0,
+                    textAlign: "center"
+                  }}>
+                    💡 These are demo accounts. For new users, please register above!
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Footer */}
@@ -405,7 +740,7 @@ const SignIn = () => {
           fontSize: "0.9rem"
         }}>
           <p style={{ margin: 0 }}>
-            🤖 Powered by AI • No Database Required
+            🤖 Powered by AI • 🔐 Secure Database Storage
           </p>
         </div>
       </div>
