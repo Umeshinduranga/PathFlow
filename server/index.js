@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import LearningPath from "./models/LearningPath.js";
+import authRoutes from "./routes/auth.js";
 
 // Load environment variables
 dotenv.config();
@@ -88,16 +89,37 @@ mongoose.connection.on('error', (err) => {
 
 // Setup Gemini AI client with error handling
 let model;
-try {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY is not configured");
+
+const initializeGemini = async () => {
+  try {
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
+    }
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const geminiModel = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    console.log(`🔄 Attempting to initialize Gemini AI with model: ${geminiModel}`);
+    
+    // Create model instance
+    model = genAI.getGenerativeModel({ model: geminiModel });
+    
+    // Test with a simple prompt to verify it works
+    const testResult = await model.generateContent("Hello");
+    console.log(`✅ Gemini AI initialized successfully with model: ${geminiModel}`);
+    console.log(`🧪 API test successful - model is responding`);
+    
+  } catch (error) {
+    console.error("❌ Gemini AI initialization failed:", error.message);
+    console.log("� Tip: Available models for your API key might be:");
+    console.log("   - gemini-1.0-pro-latest");
+    console.log("   - gemini-1.0-pro");
+    console.log("   - text-bison-001");
+    console.log("�🔄 Continuing without AI features...");
+    model = null;
   }
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-  console.log("✅ Gemini AI initialized");
-} catch (error) {
-  console.error("❌ Gemini AI initialization failed:", error.message);
-}
+};
+
+// Initialize Gemini AI
+initializeGemini();
 
 // Validation middleware
 const validateLearningPathInput = (req, res, next) => {
@@ -154,9 +176,12 @@ app.get("/", (req, res) => {
     message: "🚀 Learning Path Generator API",
     version: "1.0.0",
     status: "running",
-    endpoints: ["/generate-path", "/generate-roadmap-steps"]
+    endpoints: ["/generate-path", "/generate-roadmap-steps", "/api/auth/*"]
   });
 });
+
+// Auth routes
+app.use("/api/auth", authRoutes);
 
 // Health check endpoint
 app.get("/health", async (req, res) => {
