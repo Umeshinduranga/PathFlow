@@ -7,11 +7,35 @@ A full-stack web application that generates personalized learning paths using AI
 - **User Authentication**: Secure registration and login system using JWT tokens
 - **Skill Assessment**: Interactive form to input skills, career goals, and learning preferences
 - **AI-Powered Learning Paths**: Leverages Google Gemini API to create personalized learning roadmaps
+- **Market Insights**: Real-time salary data and market trends for your career goal 💰
+- **Visual Roadmaps**: Interactive roadmap generation with downloadable formats
 - **Curated Resources**: Integration with free learning platforms (freeCodeCamp, Coursera, Khan Academy)
 - **Progress Tracking**: Mark milestones as complete and visualize your learning journey
 - **Study Groups**: Join or create community study groups for collaborative learning (coming soon)
 - **Responsive Design**: Modern, mobile-friendly interface built with React and Tailwind CSS
 - **Visual Analytics**: Progress visualization with Chart.js (planned feature)
+
+## 💼 Market Insights Feature
+
+The Market Insights feature provides real-time career intelligence to help you understand the market value of your target role:
+
+### Key Features:
+- **Salary Ranges**: Current industry salary data for your career goal
+- **Hot Job Indicators**: Visual badges for high-demand roles 🔥
+- **Top Skills**: Most requested skills for your target position
+- **Market Intelligence**: Industry trends and growth projections
+
+### Supported Career Paths:
+- Full Stack Developer, Frontend/Backend Developer
+- Data Scientist, AI/ML Engineer
+- UX/UI Designer, Product Designer  
+- DevOps Engineer, Cloud Engineer
+- Mobile Developer (iOS/Android)
+- Cybersecurity Analyst
+- Blockchain Developer
+- And many more...
+
+The feature automatically detects your career goal and displays relevant market data to help you make informed decisions about your learning path.
 
 ---
 
