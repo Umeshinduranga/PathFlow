@@ -1,0 +1,14 @@
+{
+  "name": "personal-learning-path-backend",
+  "runtime": "nodejs",
+  "rootDir": "./server",
+  "build": {
+    "command": "npm install"
+  },
+  "start": {
+    "command": "npm start"
+  },
+  "env": {
+    "NODE_ENV": "production"
+  }
+}
