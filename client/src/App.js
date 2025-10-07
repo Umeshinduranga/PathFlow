@@ -2,6 +2,7 @@ import React, { useState, createContext, useContext, useEffect, useRef } from "r
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from "react-router-dom";
 import authService from "./services/authService";
 import MarketInsights from "./components/MarketInsights";
+import Dashboard from "./components/Dashboard";
 
 // Global Context for state management
 const AppContext = createContext();
@@ -808,6 +809,21 @@ const Navigation = () => {
             marginRight: "1rem"
           }}>
             Generate Path
+          </Link>
+          
+          <Link to="/dashboard" style={{
+            color: "white",
+            textDecoration: "none",
+            padding: "0.5rem 1rem",
+            borderRadius: "12px",
+            transition: "background-color 0.3s",
+            fontFamily: 'Poppins',
+            backgroundColor: "rgba(60,26,107, 0.3)",
+            fontWeight: "bold",
+            border: "1px solid rgba(60,26,107, 0.4)",
+            marginRight: "1rem"
+          }}>
+            📊 Dashboard
           </Link>
           
           {/* User Info and Logout */}
@@ -1973,6 +1989,7 @@ function App() {
                       <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/generate" element={<GeneratePathForm />} />
+                        <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </main>
