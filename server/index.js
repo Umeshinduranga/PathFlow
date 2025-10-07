@@ -7,6 +7,7 @@ import helmet from "helmet";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import LearningPath from "./models/LearningPath.js";
 import authRoutes from "./routes/auth.js";
+import dashboardRoutes from "./routes/dashboard.js";
 
 // Load environment variables
 dotenv.config();
@@ -182,6 +183,9 @@ app.get("/", (req, res) => {
 
 // Auth routes
 app.use("/api/auth", authRoutes);
+
+// Dashboard routes (new - safe addition)
+app.use("/api/dashboard", dashboardRoutes);
 
 // Health check endpoint
 app.get("/health", async (req, res) => {
@@ -405,25 +409,19 @@ app.use((req, res) => {
 process.on('SIGTERM', () => {
   console.log('👋 SIGTERM received, shutting down gracefully');
   if (isMongoConnected) {
-    mongoose.connection.close(() => {
-      console.log('📦 Database connection closed');
-      process.exit(0);
-    });
-  } else {
-    process.exit(0);
+    mongoose.connection.close();
+    console.log('📦 Database connection closed');
   }
+  process.exit(0);
 });
 
 process.on('SIGINT', () => {
   console.log('👋 SIGINT received, shutting down gracefully');
   if (isMongoConnected) {
-    mongoose.connection.close(() => {
-      console.log('📦 Database connection closed');
-      process.exit(0);
-    });
-  } else {
-    process.exit(0);
+    mongoose.connection.close();
+    console.log('📦 Database connection closed');
   }
+  process.exit(0);
 });
 
 // Start server
