@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 import LearningPath from "./models/LearningPath.js";
 import authRoutes from "./routes/auth.js";
 import dashboardRoutes from "./routes/dashboard.js";
@@ -90,37 +91,121 @@ mongoose.connection.on('error', (err) => {
 
 // Setup Gemini AI client with error handling
 let model;
+let openaiClient;
+let useDirectGeminiAPI = false;
+
+// Function to call Gemini REST API directly
+async function callGeminiDirectly(prompt) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  const modelName = process.env.GEMINI_MODEL || 'gemini-pro';
+  
+  // Try different API endpoints
+  const endpoints = [
+    `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
+  ];
+  
+  for (const url of endpoints) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }]
+        })
+      });
+      
+      if (!response.ok) {
+        const error = await response.text();
+        console.log(`⚠️ API endpoint failed: ${url.includes('/v1/') ? 'v1' : 'v1beta'}`);
+        continue;
+      }
+      
+      const data = await response.json();
+      
+      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+        const text = data.candidates[0].content.parts[0].text;
+        return text;
+      }
+      
+      throw new Error('Invalid response format from Gemini API');
+    } catch (error) {
+      console.log(`⚠️ Endpoint ${url.includes('/v1/') ? 'v1' : 'v1beta'} error: ${error.message}`);
+      continue;
+    }
+  }
+  
+  throw new Error('All Gemini API endpoints failed');
+}
 
 const initializeGemini = async () => {
   try {
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'YOUR_NEW_API_KEY_HERE') {
       throw new Error("GEMINI_API_KEY is not configured");
     }
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const geminiModel = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-    console.log(`🔄 Attempting to initialize Gemini AI with model: ${geminiModel}`);
     
-    // Create model instance
+    const geminiModel = process.env.GEMINI_MODEL || "gemini-pro";
+    console.log(`🔄 Initializing Gemini AI with model: ${geminiModel}`);
+    
+    // Try using the direct REST API first
+    try {
+      const testResponse = await callGeminiDirectly("Say 'hello' in one word");
+      if (testResponse) {
+        useDirectGeminiAPI = true;
+        console.log(`✅ Gemini REST API working! Response: ${testResponse.substring(0, 30)}...`);
+        console.log(`🎉 Using direct REST API for Gemini Pro`);
+        return;
+      }
+    } catch (directError) {
+      console.log(`⚠️ Direct REST API failed: ${directError.message}`);
+      console.log(`� Trying SDK approach...`);
+    }
+    
+    // Fallback to SDK
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     model = genAI.getGenerativeModel({ model: geminiModel });
     
-    // Test with a simple prompt to verify it works
-    const testResult = await model.generateContent("Hello");
-    console.log(`✅ Gemini AI initialized successfully with model: ${geminiModel}`);
-    console.log(`🧪 API test successful - model is responding`);
+    console.log(`✅ Gemini AI model configured: ${geminiModel} (SDK)`);
+    console.log(`💡 Will test on first path generation request`);
     
   } catch (error) {
     console.error("❌ Gemini AI initialization failed:", error.message);
-    console.log("� Tip: Available models for your API key might be:");
-    console.log("   - gemini-1.0-pro-latest");
-    console.log("   - gemini-1.0-pro");
-    console.log("   - text-bison-001");
-    console.log("�🔄 Continuing without AI features...");
+    console.log("💡 Tip: Your Gemini API may be suspended or invalid");
+    console.log("🔄 Will attempt to use OpenAI as fallback...");
     model = null;
+    useDirectGeminiAPI = false;
   }
 };
 
-// Initialize Gemini AI
+// Setup OpenAI client as fallback
+const initializeOpenAI = () => {
+  try {
+    if (process.env.OPENAI_API_KEY) {
+      openaiClient = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      });
+      console.log("✅ OpenAI initialized as backup AI provider");
+      return true;
+    } else {
+      console.log("⚠️ OPENAI_API_KEY not configured - no AI backup available");
+      return false;
+    }
+  } catch (error) {
+    console.error("❌ OpenAI initialization failed:", error.message);
+    openaiClient = null;
+    return false;
+  }
+};
+
+// Initialize AI providers
 initializeGemini();
+initializeOpenAI();
 
 // Validation middleware
 const validateLearningPathInput = (req, res, next) => {
@@ -212,9 +297,10 @@ app.post("/generate-path", aiLimiter, validateLearningPathInput, async (req, res
   
   try {
     let generatedSteps = null;
+    let aiProvider = 'fallback';
     
-    // Try to generate with AI first
-    if (model) {
+    // Try Gemini AI first
+    if (useDirectGeminiAPI || model) {
       const prompt = `
 You are a professional career coach and learning specialist.
 
@@ -231,21 +317,79 @@ Requirements:
 Format: Return only the numbered steps, nothing else.
 `;
 
-      try {
-        const result = await model.generateContent(prompt);
-        const text = result.response.text();
-        generatedSteps = parseStepsFromResponse(text);
-        
-        if (!generatedSteps) {
-          console.warn("⚠️ AI generated invalid format, using fallback");
+      // Try direct REST API first
+      if (useDirectGeminiAPI) {
+        try {
+          console.log("🤖 Generating with Gemini REST API...");
+          const text = await callGeminiDirectly(prompt);
+          generatedSteps = parseStepsFromResponse(text);
+          aiProvider = 'gemini-direct';
+          console.log("✅ Generated successfully with Gemini REST API");
+        } catch (directError) {
+          console.error("⚠️ Gemini REST API failed:", directError.message);
+          console.log("🔄 Trying SDK fallback...");
         }
-      } catch (aiError) {
-        console.error("⚠️ AI generation failed:", aiError.message);
+      }
+
+      // Try SDK if direct API failed
+      if (!generatedSteps && model) {
+        try {
+          console.log("🤖 Generating with Gemini SDK...");
+          const result = await model.generateContent(prompt);
+          const text = result.response.text();
+          generatedSteps = parseStepsFromResponse(text);
+          aiProvider = 'gemini-sdk';
+          console.log("✅ Generated successfully with Gemini SDK");
+        } catch (aiError) {
+          console.error("⚠️ Gemini SDK failed:", aiError.message);
+          console.log("🔄 Attempting OpenAI fallback...");
+        }
+      }
+      
+      if (!generatedSteps) {
+        console.warn("⚠️ Gemini generated invalid format, trying OpenAI...");
       }
     }
     
-    // Use fallback if AI failed or returned invalid format
+    // Try OpenAI if Gemini failed
+    if (!generatedSteps && openaiClient) {
+      try {
+        const completion = await openaiClient.chat.completions.create({
+          model: "gpt-3.5-turbo",
+          messages: [
+            {
+              role: "system",
+              content: "You are a professional career coach and learning specialist. Provide exactly 6 numbered steps in a clear learning path."
+            },
+            {
+              role: "user",
+              content: `Create a step-by-step learning path for someone who knows: "${skills}" and wants to become a "${goal}". Format: Return only 6 numbered steps, nothing else.`
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 500
+        });
+        
+        const text = completion.choices[0].message.content;
+        generatedSteps = parseStepsFromResponse(text);
+        aiProvider = 'openai';
+        
+        if (generatedSteps) {
+          console.log("✅ OpenAI fallback successful");
+        } else {
+          console.warn("⚠️ OpenAI generated invalid format");
+        }
+      } catch (openaiError) {
+        console.error("⚠️ OpenAI generation also failed:", openaiError.message);
+      }
+    }
+    
+    // Use manual fallback if all AI methods failed
     const finalSteps = generatedSteps || generateFallbackPath(skills, goal);
+    if (!generatedSteps) {
+      aiProvider = 'fallback';
+      console.log("📝 Using manual fallback path generation");
+    }
     
     // Save to database (non-blocking, only if MongoDB is connected)
     const savePromise = (async () => {
@@ -265,11 +409,12 @@ Format: Return only the numbered steps, nothing else.
           skills: skillsArray.length ? skillsArray : [skills],
           goal: goal.trim(),
           path: finalSteps,
-          generatedBy: 'ai',
+          generatedBy: aiProvider,
           createdAt: new Date(),
           metadata: {
             responseTime: Date.now() - startTime,
-            aiUsed: !!generatedSteps
+            aiProvider: aiProvider,
+            aiUsed: generatedSteps !== null
           }
         });
         
@@ -287,9 +432,11 @@ Format: Return only the numbered steps, nothing else.
       success: true,
       steps: finalSteps.map((step, index) => `${index + 1}. ${step}`),
       metadata: {
-        generatedBy: generatedSteps ? 'ai' : 'fallback',
+        generatedBy: aiProvider,
+        aiProvider: aiProvider,
         responseTime: Date.now() - startTime,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        message: aiProvider === 'fallback' ? 'AI services unavailable, using manual path generation' : `Generated using ${aiProvider}`
       }
     });
     

@@ -15,7 +15,7 @@ const learningPathSchema = new mongoose.Schema({
   },
   generatedBy: {
     type: String,
-    enum: ['ai', 'manual', 'fallback'],
+    enum: ['ai', 'manual', 'fallback', 'gemini-direct', 'gemini-sdk', 'openai'],
     default: 'ai'
   },
   userId: {
