@@ -9,6 +9,7 @@ import OpenAI from "openai";
 import LearningPath from "./models/LearningPath.js";
 import authRoutes from "./routes/auth.js";
 import dashboardRoutes from "./routes/dashboard.js";
+import profileRoutes from "./routes/profile.js";
 
 // Load environment variables
 dotenv.config();
@@ -271,6 +272,9 @@ app.use("/api/auth", authRoutes);
 
 // Dashboard routes (new - safe addition)
 app.use("/api/dashboard", dashboardRoutes);
+
+// Profile routes
+app.use("/api/user", profileRoutes);
 
 // Health check endpoint
 app.get("/health", async (req, res) => {
