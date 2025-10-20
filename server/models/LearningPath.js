@@ -23,6 +23,10 @@ const learningPathSchema = new mongoose.Schema({
     ref: 'User',
     default: null
   },
+  completedSteps: {
+    type: [Number],
+    default: []
+  },
   metadata: {
     type: Object,
     default: {}
