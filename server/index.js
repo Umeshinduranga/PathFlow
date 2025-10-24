@@ -10,6 +10,8 @@ import LearningPath from "./models/LearningPath.js";
 import authRoutes from "./routes/auth.js";
 import dashboardRoutes from "./routes/dashboard.js";
 import profileRoutes from "./routes/profile.js";
+import pathsRoutes from "./routes/paths.js";
+import { optionalAuthMiddleware } from "./middleware/auth.js";
 
 // Load environment variables
 dotenv.config();
@@ -276,6 +278,9 @@ app.use("/api/dashboard", dashboardRoutes);
 // Profile routes
 app.use("/api/user", profileRoutes);
 
+// Learning paths routes (progress tracking)
+app.use("/api/paths", pathsRoutes);
+
 // Health check endpoint
 app.get("/health", async (req, res) => {
   const health = {
@@ -295,7 +300,7 @@ app.get("/health", async (req, res) => {
 });
 
 // Main AI-powered learning path generation (detailed text steps)
-app.post("/generate-path", aiLimiter, validateLearningPathInput, async (req, res) => {
+app.post("/generate-path", aiLimiter, optionalAuthMiddleware, validateLearningPathInput, async (req, res) => {
   const { skills, goal } = req.body;
   const startTime = Date.now();
   
@@ -414,6 +419,8 @@ Format: Return only the numbered steps, nothing else.
           goal: goal.trim(),
           path: finalSteps,
           generatedBy: aiProvider,
+          userId: req.user?._id || null, // Save userId if user is authenticated
+          completedSteps: [], // Initialize empty completed steps
           createdAt: new Date(),
           metadata: {
             responseTime: Date.now() - startTime,
@@ -422,7 +429,7 @@ Format: Return only the numbered steps, nothing else.
           }
         });
         
-        console.log("✅ Learning path saved to database");
+        console.log(`✅ Learning path saved to database${req.user ? ' for user ' + req.user.username : ''}`);
       } catch (dbError) {
         console.error("⚠️ Database save failed (non-critical):", dbError.message);
       }
