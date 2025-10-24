@@ -73,3 +73,43 @@ export const adminMiddleware = (req, res, next) => {
   }
   next();
 };
+
+// Optional auth middleware - sets user if token is valid, but continues if not
+export const optionalAuthMiddleware = async (req, res, next) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      // No token, continue without user
+      req.user = null;
+      return next();
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    
+    const user = await User.findById(decoded.userId).select('-password');
+    if (!user || user.isActive === false) {
+      // Invalid token or inactive user, continue without user
+      req.user = null;
+      return next();
+    }
+
+    // Set user info for the route handlers
+    req.user = {
+      _id: user._id,
+      userId: user._id,
+      username: user.username,
+      email: user.email,
+      name: user.name,
+      role: user.role
+    };
+
+    next();
+  } catch (error) {
+    // Token error, continue without user
+    req.user = null;
+    next();
+  }
+};
+
+export default authMiddleware;
