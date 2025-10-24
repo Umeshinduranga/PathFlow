@@ -5,6 +5,7 @@ import MarketInsights from "./components/MarketInsights";
 import Dashboard from "./components/Dashboard";
 import Profile from "./components/Profile";
 import Settings from "./components/Settings";
+import MyLearning from "./components/MyLearning";
 
 // Global Context for state management
 const AppContext = createContext();
@@ -826,6 +827,21 @@ const Navigation = () => {
             marginRight: "1rem"
           }}>
             📊 Dashboard
+          </Link>
+          
+          <Link to="/my-learning" style={{
+            color: "white",
+            textDecoration: "none",
+            padding: "0.5rem 1rem",
+            borderRadius: "12px",
+            transition: "background-color 0.3s",
+            fontFamily: 'Poppins',
+            backgroundColor: "rgba(60,26,107, 0.3)",
+            fontWeight: "bold",
+            border: "1px solid rgba(60,26,107, 0.4)",
+            marginRight: "1rem"
+          }}>
+            📚 My Learning
           </Link>
           
           <Link to="/profile" style={{
@@ -2027,6 +2043,7 @@ function App() {
                         <Route path="/" element={<Home />} />
                         <Route path="/generate" element={<GeneratePathForm />} />
                         <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/my-learning" element={<MyLearning />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/settings" element={<Settings />} />
                         <Route path="*" element={<NotFound />} />
