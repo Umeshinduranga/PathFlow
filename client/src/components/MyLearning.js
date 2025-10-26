@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import authService from '../services/authService';
+
+// Helper function to parse simple markdown
+const parseMarkdown = (text) => {
+  if (!text) return text;
+  
+  // Replace **bold** with <strong>
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={index}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+};
 
 const MyLearning = () => {
   const [paths, setPaths] = useState([]);
@@ -19,7 +33,7 @@ const MyLearning = () => {
       setLoading(true);
       setError('');
       
-      const token = localStorage.getItem('token');
+      const token = authService.getToken();
       if (!token) {
         setError('Please log in to view your learning paths');
         setLoading(false);
@@ -37,7 +51,7 @@ const MyLearning = () => {
       console.error('Error fetching paths:', err);
       if (err.response?.status === 401) {
         setError('Session expired. Please log in again.');
-        localStorage.removeItem('token');
+        authService.removeToken();
       } else {
         setError('Failed to load your learning paths');
       }
@@ -48,7 +62,7 @@ const MyLearning = () => {
 
   const toggleStepCompletion = async (pathId, stepIndex) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = authService.getToken();
       const response = await axios.patch(
         `/api/paths/${pathId}/steps/${stepIndex}`,
         {},
@@ -95,7 +109,7 @@ const MyLearning = () => {
 
   const deletePath = async (pathId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = authService.getToken();
       const response = await axios.delete(`/api/paths/${pathId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -779,7 +793,7 @@ const PathDetailModal = ({ path, onClose, onToggleStep, onDelete }) => {
                     Step {index + 1}
                   </span>
                   <span style={{ color: isCompleted ? '#a0a0a0' : 'white' }}>
-                    {step}
+                    {parseMarkdown(step)}
                   </span>
                 </div>
               </div>

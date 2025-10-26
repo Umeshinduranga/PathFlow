@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import authService from '../services/authService';
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
@@ -31,7 +32,7 @@ const Dashboard = () => {
       setStats(statsResponse.data.stats);
 
       // Try to fetch user's personal paths if authenticated
-      const token = localStorage.getItem('token');
+      const token = authService.getToken();
       if (token) {
         try {
           const userPathsResponse = await axios.get('/api/dashboard/my-paths', {
