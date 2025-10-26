@@ -7,6 +7,19 @@ import Profile from "./components/Profile";
 import Settings from "./components/Settings";
 import MyLearning from "./components/MyLearning";
 
+// Helper function to parse simple markdown
+const parseMarkdown = (text) => {
+  if (!text) return text;
+  
+  // Replace **bold** with <strong>
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={index}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+};
+
 // Global Context for state management
 const AppContext = createContext();
 
@@ -1099,7 +1112,7 @@ const LearningPathDisplay = ({ steps, skills, goal, metadata }) => (
           }}>
             {index + 1}
           </div>
-          <span style={{ color: "white" }}>{step.replace(/^\d+\.\s*/, '')}</span>
+          <span style={{ color: "white" }}>{parseMarkdown(step.replace(/^\d+\.\s*/, ''))}</span>
         </div>
       ))}
     </div>
