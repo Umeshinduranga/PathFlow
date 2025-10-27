@@ -1,6 +1,6 @@
-# Personal Learning Path Generator
+# Personal Learning Path (PathFlow)
 
-A full-stack web application that generates personalized learning paths using AI. Users can input their skills, career goals, and learning style to receive a tailored roadmap powered by the Google Gemini API, with progress tracking and community features.
+A full-stack web application that generates personalized, actionable learning paths. Enter your skills and goals and PathFlow returns a step-by-step roadmap. The app supports AI-generated content (Google Gemini / OpenAI), progress tracking, and exportable roadmaps.
 
 ## 🌟 Features
 
@@ -10,12 +10,18 @@ A full-stack web application that generates personalized learning paths using AI
 - **Market Insights**: Real-time salary data and market trends for your career goal 💰
 - **Visual Roadmaps**: Interactive roadmap generation with downloadable formats
 - **Curated Resources**: Integration with free learning platforms (freeCodeCamp, Coursera, Khan Academy)
-- **Progress Tracking**: Mark milestones as complete and visualize your learning journey
+- **Progress Tracking**: Mark milestones as complete and visualize your learning journey (My Learning)
 - **Study Groups**: Join or create community study groups for collaborative learning (coming soon)
 - **Responsive Design**: Modern, mobile-friendly interface built with React and Tailwind CSS
 - **Visual Analytics**: Progress visualization with Chart.js (planned feature)
 
-## 💼 Market Insights Feature
+## � What's new in this repo
+
+- Progress Tracking ("My Learning") — save generated paths, mark steps complete, and view progress bars and stats.
+- Robust AI fallback: Gemini REST / SDK → OpenAI (if configured) → Manual fallback generator (always works).
+- Markdown rendering for step text (supports **bold** out of the box).
+
+## �💼 Market Insights Feature
 
 The Market Insights feature provides real-time career intelligence to help you understand the market value of your target role:
 
@@ -94,7 +100,7 @@ Before you begin, ensure you have the following installed:
 - **Google Gemini API Key** - [Get API key](https://ai.google.dev/)
 - **Postman** (optional, for API testing) - [Download here](https://www.postman.com/)
 
-### 📥 Installation
+### 📥 Installation (local development)
 
 #### 1. Clone the Repository
 ```bash
@@ -114,27 +120,51 @@ cd ..
 ```
 
 #### 3. Configure Environment Variables
-Create a `.env` file in the root directory with the following variables:
+Create a `server/.env` file with these variables (example values):
 
 ```env
-# Database Configuration
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/learning_path
+# Server
+PORT=5000
+NODE_ENV=development
+
+# MongoDB (Atlas)
+MONGO_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/learning_path
 
 # Authentication
 JWT_SECRET=your_super_secret_jwt_key_here
 
-# AI Integration
+# AI providers
+# Google Gemini (recommended free key via Google AI Studio)
 GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-flash
 
-# Server Configuration
-PORT=5000
-NODE_ENV=development
+# Optional OpenAI backup (paid)
+# OPENAI_API_KEY=sk-your-openai-key
+
+# Client URL (used for CORS)
+CLIENT_URL=http://localhost:3000
 ```
 
+Notes:
+- The server expects `MONGO_URI` (not `MONGODB_URI`) in `server/.env`.
+- The app will gracefully fall back to a manual generator if AI keys are missing or suspended.
+
 #### 4. Start the Application
-```bash
-# Start both frontend and backend with a single command
+
+Start both frontend and backend in development mode (concurrently):
+```powershell
 npm run dev
+```
+
+Or start services individually:
+```powershell
+# Backend
+cd server
+npm start
+
+# Frontend
+cd client
+npm start
 ```
 
 The application will automatically:
@@ -168,7 +198,7 @@ You should see output similar to:
 5. **Track Progress**: Mark completed milestones and monitor your learning journey
 6. **Join Community**: Connect with study groups and fellow learners (coming soon)
 
-### API Testing with Postman
+### API Testing & Useful Endpoints
 
 If you want to test the API endpoints directly:
 
@@ -197,9 +227,19 @@ If you want to test the API endpoints directly:
 }
 ```
 
-#### Submit Learning Assessment
 - **Method**: `POST`
-- **URL**: `http://localhost:5000/api/assessment/submit`
+- **URL**: `http://localhost:5000/api/assessment/submit` (if present)
+### Progress Tracking API (new)
+Use these endpoints to fetch and update saved learning paths:
+- `GET /api/paths/my-paths` — fetch all paths for the authenticated user
+- `GET /api/paths/:id` — fetch a single path
+- `PATCH /api/paths/:id/steps/:stepIndex` — toggle completion of a step
+- `PATCH /api/paths/:id/metadata` — update metadata (notes, tags, targetDate)
+- `DELETE /api/paths/:id` — delete a path
+
+All paths require Authorization header: `Authorization: Bearer <authToken>`
+Note: The frontend stores the auth token under `authToken` in `localStorage`.
+
 - **Headers**: 
   - `Content-Type: application/json`
   - `Authorization: Bearer <your_jwt_token>`
@@ -235,14 +275,19 @@ personal-learning-path/
 └── 📄 README.md               # Project documentation
 ```
 
-## 🔌 API Endpoints
+## 🔌 API Endpoints (summary)
 
-### Authentication Routes (`/api/auth`)
-- `POST /register` - User registration
-- `POST /login` - User authentication
+### Authentication (`/api/auth`)
+- `POST /register` - register a new user
+- `POST /login` - obtain JWT token
 
-### Assessment Routes (`/api/assessment`)
-- `POST /submit` - Submit skill assessment and generate learning path
+### Learning Paths & Progress (`/api/paths`)
+- `GET /my-paths` - user paths
+- `PATCH /:id/steps/:stepIndex` - toggle a step
+
+### Generation endpoints
+- `POST /generate-path` — generate a learning path (AI first, fallback to manual)
+- `POST /generate-roadmap-steps` — simplified step generation (for canvas/exports)
 
 ## 🔧 Development Scripts
 
@@ -313,11 +358,11 @@ We welcome contributions from the community! Here's how you can help:
 - ✅ Rodmap generator integrates with generator path form
 
 ### Planned Features
-- 📋 Progress tracking with milestone completion
-- 📋 Visual progress charts using Chart.js
-- 📋 Community study groups functionality
-- 📋 Enhanced resource recommendations and filtering
-- 📋 Mobile app development
+- 📋 Visual analytics & charts
+- � Reminders and email digests
+- 🏆 Achievements & gamification
+- � Resource library and recommended courses
+- 🤝 Social features (shareable paths, study groups)
 
 ## 📞 Support
 
