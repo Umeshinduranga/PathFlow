@@ -1,0 +1,33 @@
+# Dependencies
+node_modules
+*/node_modules
+npm-debug.log
+
+# Environment files
+.env
+*.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
+
+# Build files
+dist
+build
+
+# Client files (we only need server)
+client/
