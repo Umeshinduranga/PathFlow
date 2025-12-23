@@ -37,7 +37,8 @@ const AppContextProvider = ({ children }) => {
   const [learningPaths, setLearningPaths] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [apiUrl] = useState(process.env.REACT_APP_API_URL || "http://localhost:5000");
+  // Use empty string to leverage proxy configuration (package.json proxy: "http://localhost:5000")
+  const [apiUrl] = useState(process.env.REACT_APP_API_URL || "");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
 

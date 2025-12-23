@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Use relative URLs to leverage the proxy configuration in package.json
+// The proxy is set to http://localhost:5000, so /api/auth will map to http://localhost:5000/api/auth
+const API_BASE_URL = process.env.REACT_APP_API_URL || '';
 
 class AuthService {
   constructor() {
