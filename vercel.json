@@ -1,7 +1,4 @@
 {
-  "buildCommand": "npm install --prefix server && npm install --prefix client && npm run build --prefix client",
-  "outputDirectory": "client/build",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" }
-  ]
+  "buildCommand": "cd client && npm install && npm run build",
+  "outputDirectory": "client/build"
 }
