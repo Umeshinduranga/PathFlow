@@ -1,4 +1,5 @@
 {
-  "buildCommand": "cd client && npm install && npm run build",
-  "outputDirectory": "client/build"
+  "buildCommand": "npm install --prefix client && npm run build --prefix client",
+  "outputDirectory": "client/build",
+  "installCommand": "npm install --prefix client"
 }
