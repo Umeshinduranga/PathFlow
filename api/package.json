@@ -1,19 +1,7 @@
 {
-  "name": "server",
+  "name": "api",
   "version": "1.0.0",
-  "main": "index.js",
   "type": "module",
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "scripts": {
-    "start": "node index.js",
-    "dev": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "axios": "^1.11.0",
@@ -31,9 +19,5 @@
     "mongoose": "^8.18.0",
     "node-fetch": "^3.3.2",
     "openai": "^5.10.2"
-  },
-  "description": "",
-  "devDependencies": {
-    "http-proxy-middleware": "^3.0.5"
   }
 }
