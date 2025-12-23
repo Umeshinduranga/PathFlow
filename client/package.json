@@ -10,6 +10,7 @@
     "axios": "^1.11.0",
     "chart.js": "^4.5.0",
     "html-to-image": "^1.11.13",
+    "learnpathgen": "file:..",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.8.1",
@@ -18,10 +19,10 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "cross-env CI=false react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "vercel-build": "react-scripts build"
+    "vercel-build": "cross-env CI=false react-scripts build"
   },
   "proxy": "http://localhost:5000",
   "eslintConfig": {
@@ -43,6 +44,7 @@
     ]
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
     "http-proxy-middleware": "^3.0.5"
   }
 }
