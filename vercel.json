@@ -1,20 +1,5 @@
 {
-  "version": 2,
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/api"
-    },
-    {
-      "source": "/health",
-      "destination": "/api"
-    },
-    {
-      "source": "/test",
-      "destination": "/api"
-    }
-  ],
   "buildCommand": "cd client && npm install && npm run build",
   "outputDirectory": "client/build",
-  "installCommand": "npm install --prefix api && npm install --prefix client"
+  "installCommand": "cd server && npm install"
 }
