@@ -16,7 +16,7 @@ const Settings = () => {
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-    
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setMessage({ type: 'error', text: 'New passwords do not match' });
       return;
@@ -31,7 +31,7 @@ const Settings = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/user/change-password`,
+        `${process.env.REACT_APP_API_URL || ''}/api/user/change-password`,
         {
           currentPassword: passwordData.currentPassword,
           newPassword: passwordData.newPassword
@@ -62,13 +62,13 @@ const Settings = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/user/account`,
+        `${process.env.REACT_APP_API_URL || ''}/api/user/account`,
         {
           headers: { Authorization: `Bearer ${token}` },
           data: { password: deletePassword }
         }
       );
-      
+
       // Clear local storage and redirect
       localStorage.removeItem('token');
       localStorage.removeItem('userName');

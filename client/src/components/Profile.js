@@ -15,7 +15,7 @@ const Profile = () => {
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         setMessage({ type: 'error', text: 'Please log in to view your profile' });
         setLoading(false);
@@ -23,7 +23,7 @@ const Profile = () => {
       }
 
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/user/profile`,
+        `${process.env.REACT_APP_API_URL || ''}/api/user/profile`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -36,12 +36,12 @@ const Profile = () => {
       setLoading(false);
     } catch (error) {
       console.error('Error fetching profile:', error);
-      
+
       // Handle authentication errors
       if (error.response?.status === 401 || error.response?.status === 403) {
-        setMessage({ 
-          type: 'error', 
-          text: 'Session expired. Please log in again.' 
+        setMessage({
+          type: 'error',
+          text: 'Session expired. Please log in again.'
         });
         // Clear invalid token
         localStorage.removeItem('token');
@@ -62,7 +62,7 @@ const Profile = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.patch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/user/profile`,
+        `${process.env.REACT_APP_API_URL || ''}/api/user/profile`,
         formData,
         {
           headers: { Authorization: `Bearer ${token}` }

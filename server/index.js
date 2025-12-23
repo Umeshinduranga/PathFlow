@@ -587,19 +587,24 @@ process.on('SIGINT', () => {
 });
 
 // Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  
-  if (!process.env.MONGO_URI) {
-    console.log('⚠️ Note: Running without MongoDB (set MONGO_URI to enable database features)');
-  }
-  
-  if (!process.env.GEMINI_API_KEY) {
-    console.log('⚠️ Note: Running without Gemini AI (set GEMINI_API_KEY to enable AI features)');
-  }
-});
+// Start server only if run directly
+import { fileURLToPath } from 'url';
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    
+    if (!process.env.MONGO_URI) {
+      console.log('⚠️ Note: Running without MongoDB (set MONGO_URI to enable database features)');
+    }
+    
+    if (!process.env.GEMINI_API_KEY) {
+      console.log('⚠️ Note: Running without Gemini AI (set GEMINI_API_KEY to enable AI features)');
+    }
+  });
+}
 
 export default app;
