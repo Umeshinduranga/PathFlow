@@ -1,34 +1,39 @@
 {
-  "name": "learnpathgen",
-  "version": "1.0.0",
-  "type": "module",
+  "name": "pathflow",
+  "version": "2.0.0",
   "private": true,
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
-    "dev": "concurrently \"npm start --prefix server\" \"npm start --prefix client\"",
-    "start": "cd server && npm start"
-  },
-  "devDependencies": {
-    "concurrently": "^9.2.1"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "axios": "^1.11.0",
-    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
-    "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.1",
-    "express": "^5.1.0",
-    "express-rate-limit": "^8.0.1",
-    "express-validator": "^7.2.1",
-    "helmet": "^8.1.0",
-    "joi": "^18.0.1",
+    "chart.js": "^4.5.0",
+    "html-to-image": "^1.11.13",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.0",
-    "node-fetch": "^3.3.2",
-    "openai": "^5.10.2"
+    "next": "^15.3.4",
+    "openai": "^5.10.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/mongoose": "^5.11.97",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "15.3.4",
+    "typescript": "^5.7.0"
   }
 }

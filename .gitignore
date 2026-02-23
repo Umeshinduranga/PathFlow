@@ -1,27 +1,39 @@
-# Dependencies
+# dependencies
 node_modules/
-server/node_modules/
-client/node_modules/
+.pnp
+.pnp.js
 
-# Env files
-.env
-.env.local
-.env.production
-server/.env
-client/.env
+# testing
+coverage/
 
-# Logs
-*.log
-npm-debug.log*
+# next.js
+/.next/
+/out/
 
-# Build outputs
-dist/
-build/
-client/build/
+# production
+/build
 
-# OS
+# misc
 .DS_Store
-Thumbs.db
+*.pem
 
-# Vercel
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env
+.env*.local
+.env.production
+
+# vercel
 .vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# old architecture (kept for reference during migration)
+# client/
+# server/
